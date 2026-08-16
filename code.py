@@ -423,10 +423,10 @@ def wait_for_gps_present(uart: busio.UART):
     while True:
 
         uart.write("version\r\n")
+        time.sleep(0.1)
 
         if time.monotonic() - start_time > 1:
             update_error_ui("No GPS Found for: {}s".format(int(time.monotonic() - start_time)))
-            time.sleep(0.5)
 
         if uart.in_waiting == 0:
             continue
@@ -465,8 +465,14 @@ def main():
     stats_uart_lines_recv = 0
     stats_lines_written = 0
     gps_state = GPSState()
+    last_uart_data = time.monotonic()  # Technically this is true  wait_for_gps_present()  just returned!
+
 
     while True:
+
+        if time.monotonic() - last_uart_data > 3:
+            update_error_ui("No GPS data: {}s".format(int(time.monotonic() - last_uart_data)))
+            time.sleep(0.5)
 
         # Check num bytes in buffer
         if uart.in_waiting == 0:
