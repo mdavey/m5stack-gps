@@ -396,7 +396,7 @@ def update_main_ui(datetime, sats, speed, stats_lines_written):
 
     date_time_label.text = datetime
     sats_label.text      = "Sat count: {}".format(sats)
-    speed_label.text     = "{:3.1f} kmh".format(100*speed)
+    speed_label.text     = "{:3.1f} kmh".format(speed)
     speed_label.color    = 0x00FF00
 
     battery_label.text   = get_battery_str()
