@@ -474,6 +474,7 @@ def main():
     # Main loop starts here
     print("Starting:")
 
+    current_filename = None
     lines_waiting_to_write = []
     stats_uart_lines_recv = 0
     stats_lines_written = 0
@@ -510,7 +511,11 @@ def main():
             lines_waiting_to_write.append(gps_state.current_log_line)
 
             if len(lines_waiting_to_write) >= LINES_TO_BUFFER:
-                write_buffered_lines_to_file("/sd/test.txt", lines_waiting_to_write)
+
+                if current_filename is None:
+                    current_filename = "/sd/{}.csv".format(gps_state.current_utc.replace("-", "").replace(":", "").replace("T", "_"))
+
+                write_buffered_lines_to_file(current_filename, lines_waiting_to_write)
                 stats_lines_written += len(lines_waiting_to_write)
                 lines_waiting_to_write = []
 
