@@ -120,6 +120,8 @@ class CoreS3:
             # backlight_pwm_frequency=50000 Doesn't exist in Python code
             )
 
+        self.display.rotation = 180
+
         # self.display.root_group = displayio.CIRCUITPYTHON_TERMINAL
         self.display.refresh()
 
