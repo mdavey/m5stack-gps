@@ -103,7 +103,7 @@ class CoreS3:
             pixels_in_byte_share_row=False,
             bytes_per_cell=1,
             reverse_pixels_in_byte=False,
-            reverse_bytes_in_word=True,
+            # reverse_bytes_in_word=True,  Doesn't exist in Python code
             set_column_command=0x2a,
             set_row_command=0x2b,
             write_ram_command=0x2c,
@@ -112,11 +112,12 @@ class CoreS3:
             brightness=1.0,
             single_byte_bounds=False,
             data_as_commands=False,
-            auto_refresh=True,
+            auto_refresh=False,  # <-- Turn off auto-refresh by default
             native_frames_per_second=61,
             backlight_on_high=True,
             SH1107_addressing=False,
-            backlight_pwm_frequency=50000)
+            # backlight_pwm_frequency=50000 Doesn't exist in Python code
+            )
 
         # self.display.root_group = displayio.CIRCUITPYTHON_TERMINAL
         self.display.refresh()
