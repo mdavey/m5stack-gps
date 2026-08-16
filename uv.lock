@@ -1,0 +1,31 @@
+version = 1
+revision = 3
+requires-python = ">=3.13"
+
+[[package]]
+name = "circuitpython-stubs"
+version = "10.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/52/86c580dd46861e6bade8200227f8ada8fec07a94988a62685b668b5dc7bc/circuitpython_stubs-10.2.1.tar.gz", hash = "sha256:5de36fb7b5aab7e0c0cf3e8b7d83a2a13cc179966467983a6c0551b13ffb17f9", size = 376974, upload-time = "2026-05-12T22:04:36.355Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/3e/45e8ee6d755c69d8a5243810fb62f56f6ec57de2fe0f2ba9a35139fbe2c5/circuitpython_stubs-10.2.1-py3-none-any.whl", hash = "sha256:c7647fabc43b05e5cd30f21fb55fca67f2967902195ae7fb518a2a1564c0e8fc", size = 1091622, upload-time = "2026-05-12T22:04:34.159Z" },
+]
+
+[[package]]
+name = "m5stack-gps"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "circuitpython-stubs" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "circuitpython-stubs" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "circuitpython-stubs", specifier = ">=10.2.1" }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "circuitpython-stubs" }]

@@ -1,0 +1,101 @@
+# GPS Logger (M5Stack CoreS3)
+
+A GPS data logger built on the **M5Stack CoreS3** (ESP32-S3) running **CircuitPython**.
+It reads NMEA sentences from a **Unicore UM980** GNSS receiver over UART, renders a
+live dashboard on the built-in 3.2" TFT display, monitors the battery via the
+AXP2101 PMIC, and logs every fix to an SD card as CSV.
+
+
+## Features
+
+- Basic Display with time and speed
+- Buffered SD card writes (1 Hz data, 10 lines per write)
+- Works around M5Stack CoreS3 using the same pin for LCD D/C **and** MISO for SD Card.
+
+
+## Hardware
+
+| Component     | Details                                                                 |
+|---------------|-------------------------------------------------------------------------|
+| MCU board     | M5Stack CoreS3 (ESP32-S3)                                               |
+| GNSS receiver | Unicore UM980. PortB Grove (TX/RX wiring may be swapped!) @ 115200 baud |
+| Storage       | MicroSD card                                                            |
+| Firmware      | Adafruit CircuitPython 10.x  (Nightly with SPI fix)                     |
+
+
+## Project layout
+
+```
+.
+├── code.py                                   # Main program
+├── lib/
+│   ├── axp2101.py                            # AXP2101 PMIC driver (MIT, Dario Cammi / Adafruit)
+│   ├── adafruit_bitmap_font/                 # Bitmap font loader (Adafruit)
+│   └── font_free_sans_{18,24,30,36,42,48}/   # FreeSans PCF bitmap fonts
+└── sd/
+    └── placeholder.txt   # Required for mount point
+```
+
+
+## GPS configuration
+
+The receiver is configured at every boot via UART commands:
+
+```
+mode rover
+gngga 1        # GGA at 1 Hz
+gnrmc 1        # RMC at 1 Hz
+gngga com2 1   # Same on COM2
+gnrmc com2 1
+version
+```
+
+If you add `saveconfig` once, the UM980 will persist the settings and the
+commands become a belt-and-braces check rather than a requirement.
+
+**Note:** If all messages are enabled, there seems to be an issue with the 
+UART keeping up.  Can disable unneeded messages via:
+
+```
+unlog gngsv
+unlog com1 gngsv
+```
+
+**TODO:** Perhaps should place `unlog` at start of GPS init commands by default?
+
+
+## Log format
+
+Logged to `/sd/test.txt` (append mode), one CSV row per second of fix:
+
+```
+time,lat,long,altitude,speed,sats,hdop
+2026-08-15T14:30:00Z,52.37021,4.89517,12.34,42.65,12,0.9
+```
+
+- `time` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
+- `lat`/`long` — decimal degrees, 5 decimals
+- `altitude` — metres (GGA)
+- `speed` — km/h (RMC overground speed, knots × 1.852)
+- `sats` — satellite count (GGA)
+- `hdop` — horizontal dilution of precision (GGA)
+
+A fix is accepted when `hdop < 100`.
+
+
+## References
+
+- [UM980 configuration commands](https://www.ardusimple.com/how-to-configure-unicore-um980-um981-um982/#Frequently-used-commands)
+- [NMEA-0183 GGA message](https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GGA.html)
+- Fonts from https://github.com/adafruit/circuitpython-fonts
+
+## AI Disclaimer
+
+Code (and bugs) created by a human.
+
+This readme created by Qwen3.8-27B
+
+
+## License
+
+MIT
