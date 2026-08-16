@@ -69,22 +69,25 @@ class CoreS3:
             baudrate=40000000
         )
 
-        init_seq = (b"\x01\x80\x80"              # Software reset then delay 0x80 (128ms)
-                    b"\xC8\x03\xFF\x93\x42"      # Turn on the external command
-                    b"\xC0\x02\x12\x12"          # Power Control 1
-                    b"\xC1\x01\x03"              # Power Control 2
-                    b"\xC5\x01\xF2"              # VCOM Control 1
-                    b"\xB0\x01\xE0"              # RGB Interface SYNC Mode
-                    b"\xF6\x03\x01\x00\x00"      # Interface control
-                    b"\xE0\x0F\x00\x0C\x11\x04\x11\x08\x37\x89\x4C\x06\x0C\x0A\x2E\x34\x0F"   # Positive Gamma Correction
-                    b"\xE1\x0F\x00\x0B\x11\x05\x13\x09\x33\x67\x48\x07\x0E\x0B\x2E\x33\x0F"   # Negative Gamma Correction
-                    b"\xB6\x04\x08\x82\x1D\x04"  # Display Function Control
-                    b"\x3A\x01\x55"              # COLMOD: Pixel Format Set 16 bit
-                    b"\x21\x00"                  # Display inversion ON
-                    b"\x36\x01\x08"              # Memory Access Control: RGB order
-                    b"\x11\x80\x78"              # Exit Sleep then delay 0x78 (120ms)
-                    b"\x29\x80\x78")             # Display on then delay 0x78 (120ms)
+        # This comes from the C code for the M5Stack CoreS3
+        # init_seq = (b"\x01\x80\x80"              # Software reset then delay 0x80 (128ms)
+        #             b"\xC8\x03\xFF\x93\x42"      # Turn on the external command
+        #             b"\xC0\x02\x12\x12"          # Power Control 1
+        #             b"\xC1\x01\x03"              # Power Control 2
+        #             b"\xC5\x01\xF2"              # VCOM Control 1
+        #             b"\xB0\x01\xE0"              # RGB Interface SYNC Mode
+        #             b"\xF6\x03\x01\x00\x00"      # Interface control
+        #             b"\xE0\x0F\x00\x0C\x11\x04\x11\x08\x37\x89\x4C\x06\x0C\x0A\x2E\x34\x0F"   # Positive Gamma Correction
+        #             b"\xE1\x0F\x00\x0B\x11\x05\x13\x09\x33\x67\x48\x07\x0E\x0B\x2E\x33\x0F"   # Negative Gamma Correction
+        #             b"\xB6\x04\x08\x82\x1D\x04"  # Display Function Control
+        #             b"\x3A\x01\x55"              # COLMOD: Pixel Format Set 16 bit
+        #             b"\x21\x00"                  # Display inversion ON
+        #             b"\x36\x01\x08"              # Memory Access Control: RGB order
+        #             b"\x11\x80\x78"              # Exit Sleep then delay 0x78 (120ms)
+        #             b"\x29\x80\x78")             # Display on then delay 0x78 (120ms)
 
+        # It appears that it's not really needed if it's been set up once (even after displayio.release_displays())
+        # TODO: Check if there is a 'warm_init' that's better?
         init_seq = b""
 
         self.display = busdisplay.BusDisplay(
