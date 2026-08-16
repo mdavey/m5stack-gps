@@ -450,12 +450,23 @@ def startup():
 
 def main():
 
+    # PortaA
+    board.PORTA_I2C().deinit()
     uart = busio.UART(
-        tx=board.PORTB_IN,   # I might have wired this up wrong :-)
-        rx=board.PORTB_OUT,
+        tx=board.PORTA_SCL,   # who even knows what the wiring should look like here
+        rx=board.PORTA_SDA,
         baudrate=115200,
         timeout=0.01, # 10ms wait for a character
     )
+
+
+    # PortB
+    # uart = busio.UART(
+    #     tx=board.PORTB_IN,   # I might have wired this up wrong :-)
+    #     rx=board.PORTB_OUT,
+    #     baudrate=115200,
+    #     timeout=0.01, # 10ms wait for a character
+    # )
 
     # Spin for a while waiting for a message to come back from the GPS before continuing
     wait_for_gps_present(uart)
