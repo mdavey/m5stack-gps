@@ -5,6 +5,8 @@ It reads NMEA sentences from a **Unicore UM980** GNSS receiver over UART, render
 live dashboard on the built-in 3.2" TFT display, monitors the battery via the
 AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
+**Not yet ready for use**
+
 
 ## Features
 

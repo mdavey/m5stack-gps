@@ -1,4 +1,5 @@
 import os
+import time
 import traceback
 from collections import namedtuple
 
@@ -368,6 +369,7 @@ device.display.auto_refresh = False  # Manual refresh for smoother updates
 
 page_startup = displayio.Group()
 page_main = displayio.Group()
+page_error = displayio.Group()
 
 date_time_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
 sats_label      = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
@@ -375,10 +377,18 @@ speed_label     = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=120)
 stats_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
 battery_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
 
+error_title_label = Label(FONT_LARGE, text="Error:", color=0xFF0000, x=20, y=60)
+error_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=120)
+
+
+
 for label in [date_time_label, sats_label, speed_label, stats_label, battery_label]:
     page_main.append(label)
 
-device.display.root_group = page_main
+
+page_error.append(error_title_label)
+page_error.append(error_label)
+
 
 dot_dot_dot = ""
 
@@ -409,8 +419,42 @@ def update_main_ui(datetime, sats, speed, stats_lines_written):
     device.display.refresh()
 
 
+def update_error_ui(message):
+    device.display.root_group = page_error
+    error_label.text = message
+    device.display.refresh()
+
+
 ################################################################
 
+
+def wait_for_gps_present(uart: busio.UART):
+    # Send initial commands, and check that data comes back
+    start_time = time.monotonic()
+
+    print("Checking for GPS")
+
+    while True:
+
+        uart.write("version\r\n")
+
+        if time.monotonic() - start_time > 1:
+            update_error_ui("No GPS Found for: {}s".format(int(time.monotonic() - start_time)))
+            time.sleep(0.5)
+
+        if uart.in_waiting == 0:
+            continue
+
+        # Read some stuff, and ignore it
+        data = uart.readline()
+        if not data:
+            continue
+
+        # We got something, all goto to continue
+        break
+
+
+################################################################
 
 def startup():
     pass
@@ -425,9 +469,10 @@ def main():
         timeout=0.01, # 10ms wait for a character
     )
 
-    for cmd in GPS_INIT_COMMANDS:
-        uart.write(cmd + "\r\n")
+    # Spin for a while waiting for a message to come back from the GPS before continuing
+    wait_for_gps_present(uart)
 
+    # Main loop starts here
     print("Starting:")
 
     lines_waiting_to_write = []
