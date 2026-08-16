@@ -6,6 +6,7 @@ from collections import namedtuple
 import board
 import busio
 import displayio
+import vectorio
 import fourwire
 import sdcardio
 import storage
@@ -14,11 +15,10 @@ import supervisor
 
 from axp2101 import AXP2101  # battery chip
 
-from adafruit_display_text.label import Label
-from adafruit_bitmap_font import bitmap_font
 
-# from font_free_sans_24 import FONT as FONT_SANS_24
-# from font_free_sans_48 import FONT as FONT_SANS_48
+from adafruit_display_text.label import Label
+import adafruit_focaltouch
+
 
 import font_free_sans_24
 import font_free_sans_48
@@ -365,28 +365,51 @@ def get_battery_str():
 ################################################################
 
 
+touch = adafruit_focaltouch.Adafruit_FocalTouch(i2c, debug=False)
+
+
+################################################################
+
 device = CoreS3()
 device.display.auto_refresh = False  # Manual refresh for smoother updates
 
-
+# Startup page, chose between modes
 page_startup = displayio.Group()
+
+startup_label    = Label(FONT_LARGE, text="Start Logging", color=0xFFFFFF, x=20, y=55)
+startup_messages = Label(FONT_LARGE, text="Transfer Files", color=0xFFFFFF, x=15, y=175)
+
+startup_palette = displayio.Palette(2)
+startup_palette[0] = 0x125690
+startup_palette[1] = 0x569012
+
+top_rectangle = vectorio.Rectangle(pixel_shader=startup_palette, width=320, height=120, x=0, y=0, color_index=0)
+bottom_rectangle = vectorio.Rectangle(pixel_shader=startup_palette, width=320, height=120, x=0, y=120, color_index=1)
+
+page_startup.append(top_rectangle)
+page_startup.append(bottom_rectangle)
+page_startup.append(startup_label)
+page_startup.append(startup_messages)
+
+
+# Main GPS Logging page
 page_main = displayio.Group()
-page_error = displayio.Group()
 
 date_time_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
 sats_label      = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
-speed_label     = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=120)
+speed_label     = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=110)
 stats_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
 battery_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
-
-error_title_label = Label(FONT_LARGE, text="Error:", color=0xFF0000, x=20, y=60)
-error_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=120)
-
-
 
 for label in [date_time_label, sats_label, speed_label, stats_label, battery_label]:
     page_main.append(label)
 
+
+# Error page.  Display an error
+page_error = displayio.Group()
+
+error_title_label = Label(FONT_LARGE, text="Error:", color=0xFF0000, x=20, y=60)
+error_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=120)
 
 page_error.append(error_title_label)
 page_error.append(error_label)
@@ -407,9 +430,14 @@ def update_main_ui(datetime, sats, speed, stats_lines_written):
     device.display.refresh()
 
 
-def update_error_ui(message):
+def update_error_ui(message: str):
     device.display.root_group = page_error
     error_label.text = message
+    device.display.refresh()
+
+
+def update_startup_ui():
+    device.display.root_group = page_startup
     device.display.refresh()
 
 
@@ -445,7 +473,23 @@ def wait_for_gps_present(uart: busio.UART):
 ################################################################
 
 def startup():
-    pass
+
+    update_startup_ui()
+
+    while True:
+        if touch.touched:
+            if len(touch.touches) != 1:  # No Multitouch
+                continue
+
+            # CANNOT assume that there's still a touch even at this point
+            # Iterate, because and grab it
+            for touch_event in touch.touches:
+                if touch_event["y"] > 120:  # Top!
+                    main()
+                else:
+                    update_error_ui("Bottom")
+                    time.sleep(1)
+                    update_startup_ui()
 
 
 def main():
@@ -522,4 +566,5 @@ def main():
             update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
 
 
-main()
+# main()
+startup()
