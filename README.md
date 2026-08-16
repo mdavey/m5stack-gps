@@ -80,7 +80,7 @@ time,lat,long,altitude,speed,sats,hdop
 - `sats` — satellite count (GGA)
 - `hdop` — horizontal dilution of precision (GGA)
 
-A fix is accepted when `hdop < 100`.
+A fix is accepted when `hdop < 100` and `sats > 3`.
 
 
 ## References
