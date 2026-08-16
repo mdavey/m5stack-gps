@@ -390,28 +390,14 @@ page_error.append(error_title_label)
 page_error.append(error_label)
 
 
-dot_dot_dot = ""
-
 def update_main_ui(datetime, sats, speed, stats_lines_written):
-    global dot_dot_dot
 
     device.display.root_group = page_main
 
-    if datetime is None:
-        if dot_dot_dot   == "":    dot_dot_dot = "."
-        elif dot_dot_dot == ".":   dot_dot_dot = ".."
-        elif dot_dot_dot == "..":  dot_dot_dot = "..."
-        elif dot_dot_dot == "...": dot_dot_dot = ""
-
-        date_time_label.text = ""
-        sats_label.text      = ""
-        speed_label.text     = "No Lock" + dot_dot_dot
-        speed_label.color    = 0xFF0000
-    else:
-        date_time_label.text = datetime
-        sats_label.text      = "Sat count: {}".format(sats)
-        speed_label.text     = "{:3.1f} kmh".format(100*speed)
-        speed_label.color    = 0x00FF00
+    date_time_label.text = datetime
+    sats_label.text      = "Sat count: {}".format(sats)
+    speed_label.text     = "{:3.1f} kmh".format(100*speed)
+    speed_label.color    = 0x00FF00
 
     battery_label.text   = get_battery_str()
     stats_label.text     = "Points logged: {}".format(stats_lines_written)
@@ -476,6 +462,7 @@ def main():
     print("Starting:")
 
     lines_waiting_to_write = []
+    stats_uart_lines_recv = 0
     stats_lines_written = 0
     gps_state = GPSState()
 
@@ -490,11 +477,14 @@ def main():
         if not data:
             continue
 
+        stats_uart_lines_recv += 1
+        last_uart_data = time.monotonic()
+
         # Update our state, and check if we have a fix
         should_update_ui = gps_state.update(data)
 
         if should_update_ui and not gps_state.has_fix:
-            update_main_ui(None, 0, 0, stats_lines_written)
+            update_error_ui("No Lock: ({})".format(stats_uart_lines_recv))
 
         if should_update_ui and gps_state.has_fix:
             print(gps_state.current_log_line)
