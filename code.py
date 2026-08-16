@@ -366,24 +366,26 @@ device = CoreS3()
 device.display.auto_refresh = False  # Manual refresh for smoother updates
 
 
+page_startup = displayio.Group()
+page_main = displayio.Group()
+
 date_time_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
 sats_label      = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
 speed_label     = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=120)
 stats_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
 battery_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
 
-labels = displayio.Group()
 for label in [date_time_label, sats_label, speed_label, stats_label, battery_label]:
-    labels.append(label)
+    page_main.append(label)
 
-device.display.root_group = labels
+device.display.root_group = page_main
+
 dot_dot_dot = ""
 
-
-def update_ui(datetime, sats, speed, stats_lines_written):
+def update_main_ui(datetime, sats, speed, stats_lines_written):
     global dot_dot_dot
 
-    device.display.root_group = labels
+    device.display.root_group = page_main
 
     if datetime is None:
         if dot_dot_dot   == "":    dot_dot_dot = "."
@@ -408,6 +410,10 @@ def update_ui(datetime, sats, speed, stats_lines_written):
 
 
 ################################################################
+
+
+def startup():
+    pass
 
 
 def main():
@@ -443,7 +449,7 @@ def main():
         should_update_ui = gps_state.update(data)
 
         if should_update_ui and not gps_state.has_fix:
-            update_ui(None, 0, 0, stats_lines_written)
+            update_main_ui(None, 0, 0, stats_lines_written)
 
         if should_update_ui and gps_state.has_fix:
             print(gps_state.current_log_line)
@@ -454,7 +460,7 @@ def main():
                 stats_lines_written += len(lines_waiting_to_write)
                 lines_waiting_to_write = []
 
-            update_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
+            update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
 
 
 main()
