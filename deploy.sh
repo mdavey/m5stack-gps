@@ -1,0 +1,1 @@
+cp code.py /run/media/matthewd/CIRCUITPY
