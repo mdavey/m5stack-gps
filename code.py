@@ -1,3 +1,5 @@
+# http://192.168.8.228:5000/
+
 import os
 import time
 import traceback
@@ -12,9 +14,12 @@ import sdcardio
 import storage
 import busdisplay
 import supervisor
+import wifi
+import socketpool
 
 from axp2101 import AXP2101  # battery chip
 
+from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse
 
 from adafruit_display_text.label import Label
 import adafruit_focaltouch
@@ -392,6 +397,18 @@ page_startup.append(startup_label)
 page_startup.append(startup_messages)
 
 
+# Transfer page, get files off the SD card
+page_transfer = displayio.Group()
+
+transfer_satus_1_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
+transfer_satus_2_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=80)
+transfer_satus_3_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=110)
+
+page_transfer.append(transfer_satus_1_label)
+page_transfer.append(transfer_satus_2_label)
+page_transfer.append(transfer_satus_3_label)
+
+
 # Main GPS Logging page
 page_main = displayio.Group()
 
@@ -438,6 +455,14 @@ def update_error_ui(message: str):
 
 def update_startup_ui():
     device.display.root_group = page_startup
+    device.display.refresh()
+
+
+def update_transfer_ui(message1: str, message2: str, message3: str):
+    device.display.root_group = page_transfer
+    transfer_satus_1_label.text = message1
+    transfer_satus_2_label.text = message2
+    transfer_satus_3_label.text = message3
     device.display.refresh()
 
 
@@ -494,6 +519,66 @@ def startup():
         except RuntimeError as e:
             traceback.print_exception(e)
             continue
+
+
+def transfer_default_route(request: Request):
+    with device.sd_card():
+        # Just check for file ending in ".csv"  we don't have os.path so if someone makes a directory "foo.csv/" sucks to be them
+        all_files = [filename for filename in os.listdir("/sd/")]
+
+    html = "<!DOCTYPE html>"
+    html += "<html><body>"
+    html += "<h1>Files:</h1>"
+    html += "<ul>"
+    for filename in all_files:
+        html += "<li><a href=\"/get/{}\">{}</a></li>".format(filename, filename)
+    html += "</ul>"
+    html += "<pre>{}</pre>".format(request)
+    html += "</body></html>"
+
+    update_transfer_ui("Serving...", "", "")
+
+    return Response(request, body=html, content_type="text/html")
+
+
+def transfer_send_file_route(request: Request, filename):
+
+    update_transfer_ui("Sending File", str(filename), "")
+
+    def chunked_data():
+        with device.sd_card():
+            with open("/sd/{}".format(filename), "rb") as f:
+                while True:
+                    chunk = f.read(128)
+                    if not chunk:
+                        break
+                    yield chunk
+
+    return ChunkedResponse(request, chunked_data, content_type="text/csv")
+
+
+def transfer():
+    import wifi_config
+
+    update_transfer_ui("Connecting...", wifi_config.WIFI_SSID, "")
+    wifi.radio.connect(wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD)
+
+    while not wifi.radio.connected:
+        time.sleep(0.1)
+
+    update_transfer_ui("Connected", wifi_config.WIFI_SSID, "http://{}:5000".format(wifi.radio.ipv4_address))
+
+    time.sleep(1)
+
+    pool = socketpool.SocketPool(wifi.radio)
+    server = Server(pool, debug=True)
+
+    server.add_routes([
+        Route("/", "GET", transfer_default_route),
+        Route("/get/<filename>", "GET", transfer_send_file_route)
+    ])
+
+    server.serve_forever(str(wifi.radio.ipv4_address))
 
 
 def main():
@@ -571,5 +656,4 @@ def main():
             update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
 
 
-# main()
 startup()
