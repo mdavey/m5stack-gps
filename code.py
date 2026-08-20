@@ -562,6 +562,7 @@ def main():
 
                 if current_filename is None:
                     current_filename = "/sd/{}.csv".format(gps_state.current_utc.replace("-", "").replace(":", "").replace("T", "_"))
+                    lines_waiting_to_write.insert(0, "timestamp,latitude,longitude,altitude,speed,num_satellites,hdop")
 
                 write_buffered_lines_to_file(current_filename, lines_waiting_to_write)
                 stats_lines_written += len(lines_waiting_to_write)
