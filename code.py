@@ -312,8 +312,8 @@ class GPSState:
                 self.last_rmc.utc_time.sec
             )
 
-            # time,lat,long,altitude,speed,sats,hdop,voltage
-            line = "{},{:.5f},{:.5f},{:.2f},{:.2f},{},{}".format(
+            # time,lat,long,altitude,speed,sats,hdop
+            line = "{},{:.6f},{:.6f},{:.2f},{:.2f},{},{}".format(
                 line_utc,
                 self.last_gga.latitude,
                 self.last_gga.longitude,
