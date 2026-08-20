@@ -7,12 +7,21 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 **Not yet ready for use**
 
+## Screenshots
+
+| Startup Screen              | Main Logging Screen      |
+|-----------------------------|--------------------------|
+| ![](screenshot_startup.jpg) | ![](screenshot_main.jpg) |  
+
+*(Yes it's upside down, I drilled holes before checking where the cable had to reach)*
+
 
 ## Features
 
 - Basic Display with time and speed
 - Buffered SD card writes (1 Hz data, 10 lines per write)
 - Works around M5Stack CoreS3 using the same pin for LCD D/C **and** MISO for SD Card.
+- Exposes an HTTP server for getting CSV files off SD Card
 
 
 ## Hardware
@@ -20,7 +29,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 | Component     | Details                                                                 |
 |---------------|-------------------------------------------------------------------------|
 | MCU board     | M5Stack CoreS3 (ESP32-S3)                                               |
-| GNSS receiver | Unicore UM980. PortB Grove (TX/RX wiring may be swapped!) @ 115200 baud |
+| GNSS receiver | Unicore UM980. PortA Grove (TX/RX wiring may be swapped!) @ 115200 baud |
 | Storage       | MicroSD card                                                            |
 | Firmware      | Adafruit CircuitPython 10.x  (Nightly with SPI fix)                     |
 
@@ -30,9 +39,12 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 ```
 .
 ├── code.py                                   # Main program
+├── wifi_config.py                            # Holds SSID/Password
 ├── lib/
-│   ├── axp2101.py                            # AXP2101 PMIC driver (MIT, Dario Cammi / Adafruit)
+│   ├── axp2101.py                            # AXP2101 PMIC driver (Adafruit)
+│   ├── adafruit_focaltouch.mpy               # FT6336U touch driver (Adafruit)
 │   ├── adafruit_bitmap_font/                 # Bitmap font loader (Adafruit)
+│   ├── adafruit_httpserver/                  # HTTP Webserver
 │   └── font_free_sans_{18,24,30,36,42,48}/   # FreeSans PCF bitmap fonts
 └── sd/
     └── placeholder.txt   # Required for mount point
@@ -68,21 +80,36 @@ unlog com1 gngsv
 
 ## Log format
 
-Logged to `/sd/test.txt` (append mode), one CSV row per second of fix:
+Logged to `/sd/[yyyymmdd]_[hhmmss]Z.csv`
 
 ```
-time,lat,long,altitude,speed,sats,hdop
+timestamp,latitude,longitude,altitude,speed,num_satellites,hdop
 2026-08-15T14:30:00Z,52.37021,4.89517,12.34,42.65,12,0.9
 ```
 
-- `time` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
-- `lat`/`long` — decimal degrees, 5 decimals
+- `timestamp` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
+- `latitude`/`longitude` — decimal degrees, 6 decimals
 - `altitude` — metres (GGA)
 - `speed` — km/h (RMC overground speed, knots × 1.852)
-- `sats` — satellite count (GGA)
+- `num_satellites` — satellite count (GGA)
 - `hdop` — horizontal dilution of precision (GGA)
 
 A fix is accepted when `hdop < 100` and `sats > 3`.
+
+**TODO:** Write something to convert these to a GPX file.  (We're not natively
+using a GPX because it's pretty space inefficient and not easy to append too).
+
+
+## Problems
+
+Accessing the SD Card *and* the Display at the same time doesn't seem to be
+possible as the Core3S re-used the SPI MISO pin for the DC pin of the LCD.
+
+This probably isn't a big deal if you were writing the code in C, but it
+required a workaround for CircuitPython.  The workaround seems okay, but it 
+does make the screen redraw when switching between the two devices.
+
+For a logger, I'm prepared to live with this.
 
 
 ## References
@@ -91,11 +118,12 @@ A fix is accepted when `hdop < 100` and `sats > 3`.
 - [NMEA-0183 GGA message](https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GGA.html)
 - Fonts from https://github.com/adafruit/circuitpython-fonts
 
+
 ## AI Disclaimer
 
 Code (and bugs) created by a human.
 
-This readme created by Qwen3.8-27B
+Parts of this readme created by Qwen3.8-27B
 
 
 ## License
