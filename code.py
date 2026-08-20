@@ -477,19 +477,23 @@ def startup():
     update_startup_ui()
 
     while True:
-        if touch.touched:
-            if len(touch.touches) != 1:  # No Multitouch
-                continue
+        try:
+            if touch.touched:
+                if len(touch.touches) != 1:  # No Multitouch
+                    continue
 
-            # CANNOT assume that there's still a touch even at this point
-            # Iterate, because and grab it
-            for touch_event in touch.touches:
-                if touch_event["y"] > 120:  # Top!
-                    main()
-                else:
-                    update_error_ui("Bottom")
-                    time.sleep(1)
-                    update_startup_ui()
+                # CANNOT assume that there's still a touch even at this point
+                # Iterate, because and grab it
+                for touch_event in touch.touches:
+                    if touch_event["y"] > 120:  # Top!
+                        main()
+                    else:
+                        transfer()
+
+        # RuntimeError: buffer size must match format  (I2C data was wrong in unpack() call!?)
+        except RuntimeError as e:
+            traceback.print_exception(e)
+            continue
 
 
 def main():
