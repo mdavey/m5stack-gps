@@ -39,7 +39,9 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 ```
 .
 ├── code.py                                   # Main program
-├── wifi_config.py                            # Holds SSID/Password
+├── config.py                                 # Holds SSID/Password and other settings
+├── gps.py                                    # Parses multiple messages and presents a "GPSState"
+├── nmea.py                                   # Parses raw nmea messages into typed objects
 ├── lib/
 │   ├── axp2101.py                            # AXP2101 PMIC driver (Adafruit)
 │   ├── adafruit_focaltouch.mpy               # FT6336U touch driver (Adafruit)
@@ -47,7 +49,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 │   ├── adafruit_httpserver/                  # HTTP Webserver
 │   └── font_free_sans_{18,24,30,36,42,48}/   # FreeSans PCF bitmap fonts
 └── sd/
-    └── placeholder.txt   # Required for mount point
+    └── placeholder.txt                       # Make sure SD mount point is present
 ```
 
 

@@ -3,7 +3,6 @@
 import os
 import time
 import traceback
-from collections import namedtuple
 
 import board
 import busio
@@ -13,9 +12,9 @@ import fourwire
 import sdcardio
 import storage
 import busdisplay
-import supervisor
 import wifi
 import socketpool
+import gc
 
 from axp2101 import AXP2101  # battery chip
 
@@ -25,29 +24,18 @@ from adafruit_display_text.label import Label
 import adafruit_focaltouch
 
 
-import font_free_sans_24
-import font_free_sans_48
-
-FONT_SMALL = font_free_sans_24.FONT
-FONT_LARGE = font_free_sans_48.FONT
-
-# How many GPS coords to buffer before writing to the SD Card  (1hz)
-LINES_TO_BUFFER = 10
+from gps import GPSState
+import config
 
 
 ################################################################
 
 
-# Technically if you added a "saveconfig" you'd only have to do this once
-# But nice to make sure it's in a mode I want
-GPS_INIT_COMMANDS = [
-    "mode rover",
-    "gngga 1",
-    "gnrmc 1",
-    "gngga com2 1",
-    "gnrmc com2 1",
-    "version"
-]
+import font_free_sans_24
+import font_free_sans_48
+
+FONT_SMALL = font_free_sans_24.FONT
+FONT_LARGE = font_free_sans_48.FONT
 
 
 ################################################################
@@ -149,196 +137,6 @@ class SDCardContext:
         self.sdcard.deinit()
         self.sd_spi.deinit()
         self.core.create_display()
-        return False
-
-
-################################################################
-
-
-GGA = namedtuple('GGA', ['utc_time', 'latitude', 'longitude', 'fix_quality', 'satellites', 'hdop', 'altitude'])
-RMC = namedtuple('RMC', ['utc_time', 'utc_date', 'status', 'latitude', 'longitude', 'speed_kmh', 'track'])
-
-UtcTime = namedtuple('UtcTime', ['hour', 'min', 'sec'])
-UtcDate = namedtuple('UtcDate', ['year', 'month', 'day'])
-
-
-def parse_degrees(nmea_geo: str, direction: str):
-    """Convert NMEA coordinate strings into standard float decimal degrees."""
-    if not nmea_geo or not direction: return 0.0
-    try:
-        raw = float(nmea_geo)
-        degrees = int(raw / 100)
-        minutes = raw - (degrees * 100)
-        decimal = degrees + (minutes / 60.0)
-        if direction in ('S', 'W'): decimal = -decimal
-        return decimal
-    except ValueError: return 0.0
-
-
-def safe_float(val: str):
-    """Safely convert empty or invalid strings to floats without throwing errors."""
-    try: return float(val) if val else 0.0
-    except ValueError: return 0.0
-
-
-def safe_int(val: str):
-    """Safely convert empty or invalid strings to integers."""
-    try: return int(val) if val else 0
-    except ValueError: return 0
-
-
-def parse_utc_time(val: str):
-    # hhmmss.ss
-    return UtcTime(
-        hour=safe_int(val[0:2]),
-        min=safe_int(val[2:4]),
-        sec=safe_int(val[4:6])
-    )
-
-
-def parse_utc_date(val: str):
-    # ddmmyy
-    return UtcDate(
-        year=2000 + safe_int(val[4:6]),
-        month=safe_int(val[2:4]),
-        day=safe_int(val[0:2])
-    )
-
-
-def parse_gga(parts: list):
-    # $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
-    return GGA(
-        utc_time=parse_utc_time(parts[1]),
-        latitude=parse_degrees(parts[2], parts[3]),
-        longitude=parse_degrees(parts[4], parts[5]),
-        fix_quality=safe_int(parts[6]),
-        satellites=safe_int(parts[7]),
-        hdop=safe_float(parts[8]),
-        altitude=safe_float(parts[9])
-    )
-
-
-def parse_rmc(parts: list):
-    # $--RMC,hhmmss.ss,A,llll.ll,a,yyyyy.yy,a,x.x,x.x,ddmmyy,x.x,a,a*hh
-    return RMC(
-        utc_time=parse_utc_time(parts[1]),
-        utc_date=parse_utc_date(parts[9]),
-        status=parts[2],
-        latitude=parse_degrees(parts[3], parts[4]),
-        longitude=parse_degrees(parts[5], parts[6]),
-        speed_kmh=safe_float(parts[7])*1.852,
-        track=safe_float(parts[8])
-    )
-
-
-def parse_nmea(raw_sentence: str):
-    """Clean the raw string, identify its type, and route to the correct parser."""
-    if not raw_sentence.startswith('$'): return None
-
-    # Strip any trailing carriage returns, newlines, and the checksum split
-    clean_line = raw_sentence.strip().split('*')[0]
-    parts = clean_line.split(',')
-
-    # Extract sentence identifier (e.g., GPGGA, GNRMC -> GGA, RMC)
-    msg_type = parts[0][3:] if len(parts[0]) > 3 else ""
-
-    if msg_type == "GGA": return parse_gga(parts)
-    elif msg_type == "RMC": return parse_rmc(parts)
-
-    return None
-
-
-################################################################
-
-
-class GPSState:
-    """Holds the current GPS state (because there are multiple messages each second that need to be combined)"""
-    def __init__(self):
-        self.last_gga = None
-        self.last_rmc = None
-
-        self.has_fix = False
-
-        self.current_utc = None
-        self.current_log_line = None
-        self.current_sat_count = None
-        self.current_speed = None
-
-
-    def update(self, nmea_raw_data):
-        """Pass a raw nmea data.  Returns True once each second (a GGA and RMC message)"""
-
-        # Try to parse it
-        try:
-            text = nmea_raw_data.decode("utf-8").strip()
-            msg = parse_nmea(text)
-        except Exception as e:
-            print("Error looked like NMEA message but wasn't: ", nmea_raw_data, e)
-            traceback.print_exception(e)
-            return False
-
-        # Couldn't?
-        if msg is None:
-            print("Raw: ", text)
-            return False
-
-
-        if type(msg) is GGA:
-            if self.last_gga is not None:
-                print("ERROR:  Two GGA without a RMC")
-                # supervisor.reload()
-            else:
-                self.last_gga = msg
-
-        if type(msg) is RMC:
-            if self.last_rmc is not None:
-                print("ERROR:  Two RMC without a GGA")
-                # supervisor.reload()
-            else:
-                self.last_rmc = msg
-
-        if self.last_gga and self.last_rmc:
-            if str(self.last_gga.utc_time) != str(self.last_rmc.utc_time):
-                print("ERROR:  GGA and RMC out of sync!?")
-                supervisor.reload()
-
-            # 2011-12-31T23:59:59Z
-            line_utc = "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(
-                self.last_rmc.utc_date.year,
-                self.last_rmc.utc_date.month,
-                self.last_rmc.utc_date.day,
-                self.last_rmc.utc_time.hour,
-                self.last_rmc.utc_time.min,
-                self.last_rmc.utc_time.sec
-            )
-
-            # time,lat,long,altitude,speed,sats,hdop
-            line = "{},{:.6f},{:.6f},{:.2f},{:.2f},{},{}".format(
-                line_utc,
-                self.last_gga.latitude,
-                self.last_gga.longitude,
-                self.last_gga.altitude,
-                self.last_rmc.speed_kmh,
-                self.last_gga.satellites,
-                self.last_gga.hdop
-            )
-
-            if self.last_gga.hdop < 100 and self.last_gga.satellites > 3:
-                self.has_fix = True
-                self.current_utc = line_utc
-                self.current_log_line = line
-                self.current_sat_count = self.last_gga.satellites
-                self.current_speed = self.last_rmc.speed_kmh
-            else:
-                self.has_fix = False
-
-            self.last_gga = None
-            self.last_rmc = None
-
-            # Update the UI
-            return True
-
-        # Don't update the UI
         return False
 
 
@@ -558,15 +356,13 @@ def transfer_send_file_route(request: Request, filename):
 
 
 def transfer():
-    import wifi_config
-
-    update_transfer_ui("Connecting...", wifi_config.WIFI_SSID, "")
-    wifi.radio.connect(wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD)
+    update_transfer_ui("Connecting...", config.WIFI_SSID, "")
+    wifi.radio.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
 
     while not wifi.radio.connected:
         time.sleep(0.1)
 
-    update_transfer_ui("Connected", wifi_config.WIFI_SSID, "http://{}:5000".format(wifi.radio.ipv4_address))
+    update_transfer_ui("Connected", config.WIFI_SSID, "http://{}:5000".format(wifi.radio.ipv4_address))
 
     time.sleep(1)
 
@@ -583,6 +379,8 @@ def transfer():
 
 def main():
 
+    print("Free RAM:", gc.mem_free(), "bytes")
+
     # PortaA
     board.PORTA_I2C().deinit()
     uart = busio.UART(
@@ -591,7 +389,6 @@ def main():
         baudrate=115200,
         timeout=0.01, # 10ms wait for a character
     )
-
 
     # PortB
     # uart = busio.UART(
@@ -604,8 +401,15 @@ def main():
     # Spin for a while waiting for a message to come back from the GPS before continuing
     wait_for_gps_present(uart)
 
-    # Main loop starts here
-    print("Starting:")
+
+    # Send the init commands.  At least try to read the responses.
+    for command in config.GPS_INIT_COMMANDS:
+        uart.write(command)
+        print("SEND: {}".format(command))
+        response = uart.readline()
+        if response is not None:
+            print("RECV: {}".format(response.decode("utf-8").strip()))
+
 
     current_filename = None
     lines_waiting_to_write = []
@@ -640,10 +444,10 @@ def main():
             update_error_ui("No Lock: ({})".format(stats_uart_lines_recv))
 
         if should_update_ui and gps_state.has_fix:
-            print(gps_state.current_log_line)
+            print("{} -- Fix Quality: {}".format(gps_state.current_log_line, gps_state.fix_quality))
             lines_waiting_to_write.append(gps_state.current_log_line)
 
-            if len(lines_waiting_to_write) >= LINES_TO_BUFFER:
+            if len(lines_waiting_to_write) >= config.LINES_TO_BUFFER:
 
                 if current_filename is None:
                     current_filename = "/sd/{}.csv".format(gps_state.current_utc.replace("-", "").replace(":", "").replace("T", "_"))
