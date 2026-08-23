@@ -21,6 +21,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 - Basic Display with time and speed and battery life (if battery turned on)
 - Works around M5Stack CoreS3 using the same pin for LCD D/C **and** MISO for SD Card.
 - Exposes an HTTP server for getting CSV files off SD Card
+- CLI script to download all the files locally and convert to GPX
 
 
 ## Hardware
@@ -94,8 +95,8 @@ timestamp,latitude,longitude,altitude,speed,num_satellites,hdop
 
 A fix is accepted when `hdop < 100` and `sats > 3`.
 
-**TODO:** Write something to convert these to a GPX file.  (We're not natively
-using a GPX because it's pretty space inefficient and not easy to append too).
+**Note:** We're not natively using a GPX because it's pretty space inefficient 
+and not easy to append too.
 
 
 ## Getting Data Off
