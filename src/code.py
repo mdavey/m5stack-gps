@@ -301,7 +301,7 @@ def wait_for_gps_present(uart: busio.UART):
 
 ################################################################
 
-def startup():
+def startup_ui():
 
     update_startup_ui()
 
@@ -315,9 +315,9 @@ def startup():
                 # Iterate, because and grab it
                 for touch_event in touch.touches:
                     if touch_event["y"] > 120:  # Top!
-                        main()
+                        main_ui()
                     else:
-                        transfer()
+                        transfer_ui()
 
         # RuntimeError: buffer size must match format  (I2C data was wrong in unpack() call!?)
         except RuntimeError as e:
@@ -422,7 +422,7 @@ def transfer_api_soft_reset(request: Request):
     return Response(request, body=body, content_type="text/plain")
 
 
-def transfer():
+def transfer_ui():
     update_transfer_ui("Connecting...", config.WIFI_SSID, "")
     wifi.radio.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
 
@@ -448,7 +448,7 @@ def transfer():
     server.serve_forever(str(wifi.radio.ipv4_address))
 
 
-def main():
+def main_ui():
 
     print("Free RAM:", gc.mem_free(), "bytes")
 
@@ -482,13 +482,13 @@ def main():
             print("RECV: {}".format(response.decode("utf-8").strip()))
 
 
+    # Start logging points!
     current_filename = None
     lines_waiting_to_write = []
     stats_uart_lines_recv = 0
     stats_lines_written = 0
     gps_state = GPSState()
     last_uart_data = time.monotonic()  # Technically this is true  wait_for_gps_present()  just returned!
-
 
     while True:
 
@@ -531,4 +531,5 @@ def main():
             update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
 
 
-startup()
+# Here we go!
+startup_ui()
