@@ -56,26 +56,18 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 The receiver is configured at every boot via UART commands:
 
 ```
-mode rover
-gngga 1        # GGA at 1 Hz
-gnrmc 1        # RMC at 1 Hz
-gngga com2 1   # Same on COM2
-gnrmc com2 1
+unlogall                     # disable all nmea mesasages
+config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
+mode rover                   # rover  (not a base station)
+config sbas enable auto      # enable SBAS  (or try to)
+config ppp enable auto       # enable PPP  (or try to)
+gngga 1                      # log GGA messages  (fix details)
+gnrmc 1                      # log RMC message   (speed time & date)
 version
 ```
 
-If you add `saveconfig` once, the UM980 will persist the settings and the
-commands become a belt-and-braces check rather than a requirement.
-
 **Note:** If all messages are enabled, there seems to be an issue with the 
 UART keeping up.  Can disable unneeded messages via:
-
-```
-unlog gngsv
-unlog com1 gngsv
-```
-
-**TODO:** Perhaps should place `unlog` at start of GPS init commands by default?
 
 
 ## Log format
@@ -100,7 +92,7 @@ A fix is accepted when `hdop < 100` and `sats > 3`.
 using a GPX because it's pretty space inefficient and not easy to append too).
 
 
-## Problems
+## Issues
 
 Accessing the SD Card *and* the Display at the same time doesn't seem to be
 possible as the Core3S re-used the SPI MISO pin for the DC pin of the LCD.
