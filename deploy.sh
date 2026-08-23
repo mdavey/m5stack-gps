@@ -10,7 +10,6 @@ if [ ! -d "$DEST" ]; then
     exit 1
 fi
 
-
 if [ "$METHOD" = "code" ]; then
     cp ./src/*.py "$DEST"
 fi
