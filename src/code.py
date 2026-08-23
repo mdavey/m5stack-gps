@@ -1,4 +1,7 @@
-# http://192.168.8.228:5000/
+# m5stack-gps
+# Copyright (c) 2026 Matthew Davey
+# SPDX-License-Identifier: MIT
+
 import json
 import os
 import time
