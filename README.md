@@ -123,6 +123,10 @@ does make the screen redraw when switching between the two devices.
 
 For a logger, I'm prepared to live with this.
 
+Related to this issue, if you are having trouble running CircuitPython 10.x, 
+make sure to use firmware that includes PR11155.  e.g. 
+`adafruit-circuitpython-m5stack_cores3-en_US-20260731-main-PR11155-719f88d.bin`   
+
 
 ## References
 
