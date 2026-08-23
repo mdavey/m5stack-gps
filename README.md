@@ -9,9 +9,9 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## Screenshots
 
-| Startup Screen              | Main Logging Screen      |
-|-----------------------------|--------------------------|
-| ![](screenshot_startup.jpg) | ![](screenshot_main.jpg) |  
+| Startup Screen                          | Main Logging Screen      |
+|-----------------------------------------|--------------------------|
+| ![](screenshots/screenshot_startup.jpg) | ![](screenshots/screenshot_main.jpg) |  
 
 *(Yes it's upside down, I drilled holes before checking where the cable had to reach)*
 
