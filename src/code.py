@@ -2,7 +2,6 @@
 # Copyright (c) 2026 Matthew Davey
 # SPDX-License-Identifier: MIT
 
-import json
 import os
 import time
 import traceback
