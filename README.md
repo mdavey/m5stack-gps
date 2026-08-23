@@ -18,8 +18,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## Features
 
-- Basic Display with time and speed
-- Buffered SD card writes (1 Hz data, 10 lines per write)
+- Basic Display with time and speed and battery life (if battery turned on)
 - Works around M5Stack CoreS3 using the same pin for LCD D/C **and** MISO for SD Card.
 - Exposes an HTTP server for getting CSV files off SD Card
 
