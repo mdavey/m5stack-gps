@@ -26,12 +26,12 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## Hardware
 
-| Component     | Details                                                                 |
-|---------------|-------------------------------------------------------------------------|
-| MCU board     | M5Stack CoreS3 (ESP32-S3)                                               |
-| GNSS receiver | Unicore UM980. PortA Grove (TX/RX wiring may be swapped!) @ 115200 baud |
-| Storage       | MicroSD card                                                            |
-| Firmware      | Adafruit CircuitPython 10.x  (Nightly with SPI fix)                     |
+| Component     | Details                                                                    |
+|---------------|----------------------------------------------------------------------------|
+| MCU board     | M5Stack CoreS3 (ESP32-S3)                                                  |
+| GNSS receiver | Unicore UM980. Port A/B Grove (TX/RX wiring may be swapped!) @ 115200 baud |
+| Storage       | MicroSD card                                                               |
+| Firmware      | Adafruit CircuitPython 10.x  (Nightly with SPI fix)                        |
 
 
 ## Project layout
