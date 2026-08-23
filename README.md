@@ -37,19 +37,24 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 ## Project layout
 
 ```
-.
-├── code.py                                   # Main program
-├── config.py                                 # Holds SSID/Password and other settings
-├── gps.py                                    # Parses multiple messages and presents a "GPSState"
-├── nmea.py                                   # Parses raw nmea messages into typed objects
-├── lib/
-│   ├── axp2101.py                            # AXP2101 PMIC driver (Adafruit)
-│   ├── adafruit_focaltouch.mpy               # FT6336U touch driver (Adafruit)
-│   ├── adafruit_bitmap_font/                 # Bitmap font loader (Adafruit)
-│   ├── adafruit_httpserver/                  # HTTP Webserver
-│   └── font_free_sans_{18,24,30,36,42,48}/   # FreeSans PCF bitmap fonts
-└── sd/
-    └── placeholder.txt                       # Make sure SD mount point is present
+  .
+  ├── deploy.sh                          # Shell script to copy code to M5Stack device
+  ├── sync_data.py                       # Python script to download CSV files from web API and convert into GPX
+  ├── sync_data.last_ip                  # sync_data.py caching the last used IP address
+  ├── data/                              # sync_data.py will place CSV and GPX files here 
+  └── src/ 
+      ├── code.py                        # Main M5Stack program
+      ├── config.py                      # Holds SSID/Password and other settings
+      ├── gps.py                         # Parses multiple messages and presents a "GPSState"
+      ├── nmea.py                        # Parses raw nmea messages into typed objects
+      ├── lib/
+      │   ├── axp2101.py                 # AXP2101 PMIC driver (Adafruit)
+      │   ├── adafruit_focaltouch.mpy    # FT6336U touch driver (Adafruit)
+      │   ├── adafruit_bitmap_font/      # Bitmap font loader (Adafruit)
+      │   ├── adafruit_httpserver/       # HTTP Webserver
+      │   └── font_free_sans_*/          # FreeSans PCF bitmap fonts
+      └── sd/
+          └── placeholder.txt            # Make sure SD mount point is present
 ```
 
 
@@ -69,7 +74,7 @@ version
 ```
 
 **Note:** If all messages are enabled, there seems to be an issue with the 
-UART keeping up.  Can disable unneeded messages via:
+UART keeping up.
 
 
 ## Log format
@@ -94,6 +99,19 @@ A fix is accepted when `hdop < 100` and `sats > 3`.
 using a GPX because it's pretty space inefficient and not easy to append too).
 
 
+## Getting Data Off
+
+1. Remove the SD Card and copy the CSV files.
+
+2. On startup, enter file transfer mode.  Device will connect to the Wifi AP 
+defined in `src/config.py`.  You can browse and download files via a web
+browser: `http://ip:5000/`
+
+3. Rather than using a web browser to manually download the files, enter 
+mode and then use `sync_data.py` to download any logs to `./data/` and convert
+them to GPX.
+
+
 ## Issues
 
 Accessing the SD Card *and* the Display at the same time doesn't seem to be
@@ -115,9 +133,8 @@ For a logger, I'm prepared to live with this.
 
 ## AI Disclaimer
 
-Code (and bugs) created by a human.
-
-Parts of this readme created by Qwen3.8-27B
+* Circuit Python code (and bugs) created by a human.
+* `sync_data.py` created by GLM 5.2
 
 
 ## License

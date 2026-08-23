@@ -1,12 +1,15 @@
 # http://192.168.8.228:5000/
-
+import json
 import os
 import time
 import traceback
+import binascii
+import json
 
 import board
 import busio
 import displayio
+import supervisor
 import vectorio
 import fourwire
 import sdcardio
@@ -18,7 +21,7 @@ import gc
 
 from axp2101 import AXP2101  # battery chip
 
-from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse
+from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse, INTERNAL_SERVER_ERROR_500
 
 from adafruit_display_text.label import Label
 import adafruit_focaltouch
@@ -339,20 +342,81 @@ def transfer_default_route(request: Request):
     return Response(request, body=html, content_type="text/html")
 
 
-def transfer_send_file_route(request: Request, filename):
-
-    update_transfer_ui("Sending File", str(filename), "")
-
+def transfer_api_get_file_content(request: Request, filename):
     def chunked_data():
         with device.sd_card():
             with open("/sd/{}".format(filename), "rb") as f:
                 while True:
-                    chunk = f.read(128)
+                    chunk = f.read(1024)
                     if not chunk:
                         break
                     yield chunk
 
-    return ChunkedResponse(request, chunked_data, content_type="text/csv")
+    try:
+        return ChunkedResponse(request, chunked_data, content_type="text/csv")
+    except Exception as e:
+        traceback.print_exception(e)
+        return Response(request, status=INTERNAL_SERVER_ERROR_500, body=str(e), content_type="text/plain")
+
+
+def transfer_api_get_file_list(request: Request):
+    try:
+        file_details = []
+        with device.sd_card():
+            for filename in os.listdir("/sd/"):
+                file_info = os.stat("/sd/{}".format(filename))
+                file_details.append({
+                    'filename': filename,
+                    'size': file_info[6]  # tuple has no attribute .st_size
+                })
+
+        body = json.dumps(file_details)
+        print(repr(body))
+
+        return Response(request, body=body, content_type="application/json")
+    except Exception as e:
+        traceback.print_exception(e)
+        print(repr(request))
+        return Response(request, status=INTERNAL_SERVER_ERROR_500, body=str(e), content_type="text/plain")
+
+
+def transfer_api_get_crc32(request: Request, filename: str):
+    try:
+        crc32_value = 0
+        with device.sd_card():
+            with open("/sd/{}".format(filename), "rb") as f:
+                while True:
+                    chunk = f.read(1024)
+                    if not chunk:
+                        break
+                    crc32_value = binascii.crc32(chunk, crc32_value)
+
+            body = hex(crc32_value)
+            return Response(request, body=body, content_type="text/plain")
+
+    except Exception as e:
+        traceback.print_exception(e)
+        return Response(request, status=INTERNAL_SERVER_ERROR_500, body=str(e), content_type="text/plain")
+
+
+def transfer_api_delete_file(request: Request, filename: str):
+    try:
+        with device.sd_card():
+            os.unlink(("/sd/{}".format(filename)))
+
+            body = "{} removed".format(filename)
+            return Response(request, body=body, content_type="text/plain")
+
+    except Exception as e:
+        traceback.print_exception(e)
+        return Response(request, status=INTERNAL_SERVER_ERROR_500, body=str(e), content_type="text/plain")
+
+
+def transfer_api_soft_reset(request: Request):
+    supervisor.reload()
+
+    body = "performing soft reset"
+    return Response(request, body=body, content_type="text/plain")
 
 
 def transfer():
@@ -371,7 +435,11 @@ def transfer():
 
     server.add_routes([
         Route("/", "GET", transfer_default_route),
-        Route("/get/<filename>", "GET", transfer_send_file_route)
+        Route("/get/<filename>", "GET", transfer_api_get_file_content),
+        Route("/list", "GET", transfer_api_get_file_list),
+        Route("/crc32/<filename>", "GET", transfer_api_get_crc32),
+        Route("/delete/<filename>", "DELETE", transfer_api_delete_file),
+        Route("/reset", "GET", transfer_api_soft_reset),
     ])
 
     server.serve_forever(str(wifi.radio.ipv4_address))

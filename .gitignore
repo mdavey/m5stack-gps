@@ -1,3 +1,5 @@
 .venv
 boot_out.txt
 src/config.py
+sync_data.last_ip
+data/*
