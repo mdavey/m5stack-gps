@@ -1,5 +1,4 @@
 import traceback
-import supervisor
 from nmea import GGA, RMC, parse_nmea
 
 
@@ -8,6 +7,10 @@ try:
     # but fails gracefully and safely on the microcontroller.
     from typing import Optional
 except ImportError:
+    pass
+
+
+class GPSStateException(Exception):
     pass
 
 
@@ -46,22 +49,19 @@ class GPSState:
 
         if type(msg) is GGA:
             if self._last_gga is not None:
-                print("ERROR:  Two GGA without a RMC")
-                # supervisor.reload()
+                raise GPSStateException("Two GGA without a RMC")
             else:
                 self._last_gga = msg
 
         if type(msg) is RMC:
             if self._last_rmc is not None:
-                print("ERROR:  Two RMC without a GGA")
-                # supervisor.reload()
+                raise GPSStateException("Two RMC without a GGA")
             else:
                 self._last_rmc = msg
 
         if self._last_gga and self._last_rmc:
             if str(self._last_gga.utc_time) != str(self._last_rmc.utc_time):
-                print("ERROR:  GGA and RMC out of sync!?")
-                supervisor.reload()
+                raise GPSStateException("GGA and RMC out of sync!?")
 
             # 2011-12-31T23:59:59Z
             line_utc = "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(

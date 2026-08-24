@@ -29,7 +29,7 @@ from adafruit_display_text.label import Label
 import adafruit_focaltouch
 
 
-from gps import GPSState
+from gps import GPSState, GPSStateException
 import config
 
 
@@ -508,7 +508,13 @@ def main_ui():
         last_uart_data = time.monotonic()
 
         # Update our state, and check if we have a fix
-        should_update_ui = gps_state.update(data)
+        try:
+            should_update_ui = gps_state.update(data)
+        except GPSStateException as e:
+            traceback.print_exception(e)
+            update_error_ui("Error with GPS State!: {}".format(e))
+            time.sleep(5)
+            supervisor.reload()
 
         if should_update_ui and not gps_state.has_fix:
             update_error_ui("No Lock: ({})".format(stats_uart_lines_recv))
