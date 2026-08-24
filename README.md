@@ -66,8 +66,7 @@ The receiver is configured at every boot via UART commands:
 unlogall                     # disable all nmea mesasages
 config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
 mode rover                   # rover  (not a base station)
-config sbas enable auto      # enable SBAS  (or try to)
-config ppp enable auto       # enable PPP  (or try to)
+config sbas enable span      # enable SBAS for SouthPAN  (Australia)
 gngga 1                      # log GGA messages  (fix details)
 gnrmc 1                      # log RMC message   (speed time & date)
 version
@@ -133,7 +132,7 @@ make sure to use firmware that includes PR11155.  e.g.
 - [UM980 configuration commands](https://www.ardusimple.com/how-to-configure-unicore-um980-um981-um982/#Frequently-used-commands)
 - [NMEA-0183 GGA message](https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GGA.html)
 - Fonts from https://github.com/adafruit/circuitpython-fonts
-
+- PRN 122 or 139 are SouthPAN SBAS
 
 ## AI Disclaimer
 

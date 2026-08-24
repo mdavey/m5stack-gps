@@ -4,13 +4,12 @@ WIFI_PASSWORD = "password"
 
 # These commands are specific to the UM98x series for GPS receivers
 GPS_INIT_COMMANDS = [
-    'unlogall',
+    "unlogall",
     "config signalgroup 2",
     "mode rover",
-    "config sbas enable auto",
-    "config ppp enable auto",
-    "gngga 1",
-    "gnrmc 1",
+    "config sbas enable span",
+    "gpgga 1",
+    "gprmc 1",
     "version"
 ]
 
