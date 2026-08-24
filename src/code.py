@@ -474,7 +474,7 @@ def main_ui():
 
     # Send the init commands.  At least try to read the responses.
     for command in config.GPS_INIT_COMMANDS:
-        uart.write(command)
+        uart.write(command + "\r\n")
         print("SEND: {}".format(command))
         response = uart.readline()
         if response is not None:
