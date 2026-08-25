@@ -215,13 +215,15 @@ page_transfer.append(transfer_satus_3_label)
 # Main GPS Logging page
 page_main = displayio.Group()
 
-date_time_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
-sats_label      = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
-speed_label     = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=110)
-stats_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
-battery_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
+date_time_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
+sats_label        = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
+fix_quality_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=220, y=50)
+speed_label       = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=110)
+stats_label       = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
+battery_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
 
-for label in [date_time_label, sats_label, speed_label, stats_label, battery_label]:
+
+for label in [date_time_label, sats_label, speed_label, stats_label, fix_quality_label, battery_label]:
     page_main.append(label)
 
 
@@ -235,17 +237,18 @@ page_error.append(error_title_label)
 page_error.append(error_label)
 
 
-def update_main_ui(datetime, sats, speed, stats_lines_written):
+def update_main_ui(datetime: str, sats: int, speed: float, stats_lines_written: int, fix_quality: str):
 
     device.display.root_group = page_main
 
-    date_time_label.text = datetime
-    sats_label.text      = "Sat count: {}".format(sats)
-    speed_label.text     = "{:3.1f} kmh".format(speed)
-    speed_label.color    = 0x00FF00
+    date_time_label.text   = datetime
+    sats_label.text        = "Sat count: {}".format(sats)
+    speed_label.text       = "{:3.1f} kmh".format(speed)
+    speed_label.color      = 0x00FF00
 
-    battery_label.text   = get_battery_str()
-    stats_label.text     = "Points logged: {}".format(stats_lines_written)
+    battery_label.text     = get_battery_str()
+    stats_label.text       = "Points logged: {}".format(stats_lines_written)
+    fix_quality_label.text = fix_quality
 
     device.display.refresh()
 
@@ -533,7 +536,11 @@ def main_ui():
                 stats_lines_written += len(lines_waiting_to_write)
                 lines_waiting_to_write = []
 
-            update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written)
+            # If we have a SBAS fix, put it on the UI
+            fix_quality_str = ""
+            if gps_state.fix_quality == 2:
+                fix_quality_str = "SBAS"
+            update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written, fix_quality_str)
 
 
 # Here we go!
