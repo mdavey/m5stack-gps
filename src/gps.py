@@ -60,21 +60,14 @@ class GPSState:
                 self._last_rmc = msg
 
         if self._last_gga and self._last_rmc:
-            if str(self._last_gga.utc_time) != str(self._last_rmc.utc_time):
+            if self._last_gga.utc_time != self._last_rmc.utc_time:  # these are comparable
                 raise GPSStateException("GGA and RMC out of sync!?")
 
             # 2011-12-31T23:59:59Z
-            line_utc = "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(
-                self._last_rmc.utc_date.year,
-                self._last_rmc.utc_date.month,
-                self._last_rmc.utc_date.day,
-                self._last_rmc.utc_time.hour,
-                self._last_rmc.utc_time.min,
-                self._last_rmc.utc_time.sec
-            )
+            line_utc = "{}T{}Z".format(self._last_rmc.utc_date, self._last_rmc.utc_time)
 
             # time,lat,long,altitude,speed,sats,hdop
-            line = "{},{:.6f},{:.6f},{:.2f},{:.2f},{},{}".format(
+            line = "{},{},{},{:.2f},{:.2f},{},{}".format(
                 line_utc,
                 self._last_gga.latitude,
                 self._last_gga.longitude,
