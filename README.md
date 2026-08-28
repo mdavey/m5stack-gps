@@ -116,7 +116,7 @@ them to GPX.
 ## Issues
 
 Accessing the SD Card *and* the Display at the same time doesn't seem to be
-possible as the Core3S re-used the SPI MISO pin for the DC pin of the LCD.
+possible as the CoreS3 re-used the SPI MISO pin for the DC pin of the LCD.
 
 This probably isn't a big deal if you were writing the code in C, but it
 required a workaround for CircuitPython.  The workaround seems okay, but it 
