@@ -40,13 +40,15 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
   .
   ├── deploy.sh                          # Shell script to copy code to M5Stack device
   ├── sync_data.py                       # Python script to download CSV files from web API and convert into GPX
-  ├── sync_data.last_ip                  # sync_data.py caching the last used IP address
+  ├── sync_data.last_ip                  # Cache file holding the last used IP address
   ├── data/                              # sync_data.py will place CSV and GPX files here 
   └── src/ 
       ├── code.py                        # Main M5Stack program
-      ├── config.py                      # Holds SSID/Password and other settings
+      ├── config.py                      # Holds SSID/Password and other settings (gitignored, copy from config.py.sample)
+      ├── config.py.sample               # Template for config.py
       ├── gps.py                         # Parses multiple messages and presents a "GPSState"
       ├── nmea.py                        # Parses raw nmea messages into typed objects
+      ├── nano_degrees.py                # Integer-math lat/long type (decimal degrees at nano-degree precision)
       ├── lib/
       │   ├── axp2101.py                 # AXP2101 PMIC driver (Adafruit)
       │   ├── adafruit_focaltouch.mpy    # FT6336U touch driver (Adafruit)
