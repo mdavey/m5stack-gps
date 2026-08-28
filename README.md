@@ -65,7 +65,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 The receiver is configured at every boot via UART commands:
 
 ```
-unlogall                     # disable all nmea mesasages
+unlogall                     # disable all nmea messages
 config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
 mode rover                   # rover  (not a base station)
 config sbas enable span      # enable SBAS for SouthPAN  (Australia)

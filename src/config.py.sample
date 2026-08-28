@@ -8,8 +8,8 @@ GPS_INIT_COMMANDS = [
     "config signalgroup 2",
     "mode rover",
     "config sbas enable span",
-    "gpgga 1",
-    "gprmc 1",
+    "gngga 1",
+    "gnrmc 1",
     "version"
 ]
 
