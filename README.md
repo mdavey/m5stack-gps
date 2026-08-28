@@ -82,11 +82,11 @@ Logged to `/sd/[yyyymmdd]_[hhmmss]Z.csv`
 
 ```
 timestamp,latitude,longitude,altitude,speed,num_satellites,hdop
-2026-08-15T14:30:00Z,52.37021,4.89517,12.34,42.65,12,0.9
+2026-08-15T14:30:00Z,-47.276949070,142.138929220,12.34,42.65,12,0.9
 ```
 
 - `timestamp` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
-- `latitude`/`longitude` — decimal degrees, 6 decimals
+- `latitude`/`longitude` — decimal degrees
 - `altitude` — metres (GGA)
 - `speed` — km/h (RMC overground speed, knots × 1.852)
 - `num_satellites` — satellite count (GGA)
