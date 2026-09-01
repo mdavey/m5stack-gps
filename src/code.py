@@ -12,7 +12,6 @@ import board
 import busio
 import displayio
 import supervisor
-import vectorio
 import fourwire
 import sdcardio
 import storage
@@ -22,25 +21,12 @@ import socketpool
 import gc
 
 from axp2101 import AXP2101  # battery chip
-
 from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse, INTERNAL_SERVER_ERROR_500
-
-from adafruit_display_text.label import Label
 import adafruit_focaltouch
 
-
-from gps import GPSState, GPSStateException
 import config
-
-
-################################################################
-
-
-import font_free_sans_24
-import font_free_sans_48
-
-FONT_SMALL = font_free_sans_24.FONT
-FONT_LARGE = font_free_sans_48.FONT
+from ui import PageStartup, Fonts, PageError, PageTransfer, PageLogger
+from gps import GPSState, GPSStateException
 
 
 ################################################################
@@ -159,6 +145,8 @@ def write_buffered_lines_to_file(filename, lines):
 
 ################################################################
 
+device = CoreS3()
+device.display.auto_refresh = False
 
 i2c = board.I2C()
 pmic = AXP2101(i2c)
@@ -169,107 +157,15 @@ def get_battery_str():
     else:
         return "No battery connected"
 
-
-################################################################
-
-
 touch = adafruit_focaltouch.Adafruit_FocalTouch(i2c, debug=False)
 
+fonts = Fonts()
+fonts.load()
 
-################################################################
-
-device = CoreS3()
-device.display.auto_refresh = False  # Manual refresh for smoother updates
-
-# Startup page, chose between modes
-page_startup = displayio.Group()
-
-startup_label    = Label(FONT_LARGE, text="Start Logging", color=0xFFFFFF, x=20, y=55)
-startup_messages = Label(FONT_LARGE, text="Transfer Files", color=0xFFFFFF, x=15, y=175)
-
-startup_palette = displayio.Palette(2)
-startup_palette[0] = 0x125690
-startup_palette[1] = 0x569012
-
-top_rectangle = vectorio.Rectangle(pixel_shader=startup_palette, width=320, height=120, x=0, y=0, color_index=0)
-bottom_rectangle = vectorio.Rectangle(pixel_shader=startup_palette, width=320, height=120, x=0, y=120, color_index=1)
-
-page_startup.append(top_rectangle)
-page_startup.append(bottom_rectangle)
-page_startup.append(startup_label)
-page_startup.append(startup_messages)
-
-
-# Transfer page, get files off the SD card
-page_transfer = displayio.Group()
-
-transfer_satus_1_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
-transfer_satus_2_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=80)
-transfer_satus_3_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=110)
-
-page_transfer.append(transfer_satus_1_label)
-page_transfer.append(transfer_satus_2_label)
-page_transfer.append(transfer_satus_3_label)
-
-
-# Main GPS Logging page
-page_main = displayio.Group()
-
-date_time_label   = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=20)
-sats_label        = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=50)
-fix_quality_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=220, y=50)
-speed_label       = Label(FONT_LARGE, text="", color=0xFF0000, x=40, y=110)
-stats_label       = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=180)
-battery_label     = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=210)
-
-
-for label in [date_time_label, sats_label, speed_label, stats_label, fix_quality_label, battery_label]:
-    page_main.append(label)
-
-
-# Error page.  Display an error
-page_error = displayio.Group()
-
-error_title_label = Label(FONT_LARGE, text="Error:", color=0xFF0000, x=20, y=60)
-error_label = Label(FONT_SMALL, text="", color=0xFFFFFF, x=20, y=120)
-
-page_error.append(error_title_label)
-page_error.append(error_label)
-
-
-def update_main_ui(datetime: str, sats: int, speed: float, stats_lines_written: int, fix_quality: str):
-
-    device.display.root_group = page_main
-
-    date_time_label.text   = datetime
-    sats_label.text        = "Sat count: {}".format(sats)
-    speed_label.text       = "{:3.1f} kmh".format(speed)
-    speed_label.color      = 0x00FF00
-
-    battery_label.text     = get_battery_str()
-    stats_label.text       = "Points logged: {}".format(stats_lines_written)
-    fix_quality_label.text = fix_quality
-
-    device.display.refresh()
-
-
-def update_error_ui(message: str):
-    device.display.root_group = page_error
-    error_label.text = message
-    device.display.refresh()
-
-
-def update_startup_ui():
-    device.display.root_group = page_startup
-    device.display.refresh()
-
-
-def update_transfer_ui(message1: str, message2: str, message3: str):
-    device.display.root_group = page_transfer
-    transfer_satus_1_label.text = message1
-    transfer_satus_2_label.text = message2
-    transfer_satus_3_label.text = message3
-    device.display.refresh()
+page_startup = PageStartup(device, fonts)
+page_error = PageError(device, fonts)
+page_transfer = PageTransfer(device, fonts)
+page_logger = PageLogger(device, fonts)
 
 
 ################################################################
@@ -283,11 +179,12 @@ def wait_for_gps_present(uart: busio.UART):
 
     while True:
 
+        # noinspection PyTypeChecker
         uart.write("version\r\n")
         time.sleep(0.1)
 
         if time.monotonic() - start_time > 1:
-            update_error_ui("No GPS Found for: {}s".format(int(time.monotonic() - start_time)))
+            page_error.show("No GPS Found", "For: {}s".format(int(time.monotonic() - start_time)))
 
         if uart.in_waiting == 0:
             continue
@@ -305,7 +202,7 @@ def wait_for_gps_present(uart: busio.UART):
 
 def startup_ui():
 
-    update_startup_ui()
+    page_startup.show()
 
     while True:
         try:
@@ -342,8 +239,6 @@ def transfer_default_route(request: Request):
     html += "<pre>{}</pre>".format(request)
     html += "</body></html>"
 
-    update_transfer_ui("Serving...", "", "")
-
     return Response(request, body=html, content_type="text/html")
 
 
@@ -376,7 +271,6 @@ def transfer_api_get_file_list(request: Request):
                 })
 
         body = json.dumps(file_details)
-        print(repr(body))
 
         return Response(request, body=body, content_type="application/json")
     except Exception as e:
@@ -396,7 +290,7 @@ def transfer_api_get_crc32(request: Request, filename: str):
                         break
                     crc32_value = binascii.crc32(chunk, crc32_value)
 
-            body = hex(crc32_value)
+            body = hex(crc32_value) # If I move this out of the device.sd_card block CircuitPython hard crashes...
             return Response(request, body=body, content_type="text/plain")
 
     except Exception as e:
@@ -425,13 +319,13 @@ def transfer_api_soft_reset(request: Request):
 
 
 def transfer_ui():
-    update_transfer_ui("Connecting...", config.WIFI_SSID, "")
+    page_transfer.show("Connecting...", config.WIFI_SSID, "")
     wifi.radio.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
 
     while not wifi.radio.connected:
         time.sleep(0.1)
 
-    update_transfer_ui("Connected", config.WIFI_SSID, "http://{}:5000".format(wifi.radio.ipv4_address))
+    page_transfer.show("Connected", config.WIFI_SSID, "http://{}:5000/".format(wifi.radio.ipv4_address))
 
     time.sleep(1)
 
@@ -495,7 +389,7 @@ def main_ui():
     while True:
 
         if time.monotonic() - last_uart_data > 3:
-            update_error_ui("No GPS data: {}s".format(int(time.monotonic() - last_uart_data)))
+            page_error.show("No GPS data", "For {}s".format(int(time.monotonic() - last_uart_data)))
             time.sleep(0.5)
 
         # Check num bytes in buffer
@@ -515,12 +409,14 @@ def main_ui():
             should_update_ui = gps_state.update(data)
         except GPSStateException as e:
             traceback.print_exception(e)
-            update_error_ui("Error with GPS State!: {}".format(e))
+            page_error.show("Error with GPS State", str(e))
             time.sleep(5)
             supervisor.reload()
 
+        # Supervisor.reload() above reloads everything, will never get here with invalid should_update_ui var
+        # noinspection PyUnboundLocalVariable
         if should_update_ui and not gps_state.has_fix:
-            update_error_ui("No Lock: ({})".format(stats_uart_lines_recv))
+            page_error.show("No GPS Lock", "(UART Data: {})".format(stats_uart_lines_recv))
 
         if should_update_ui and gps_state.has_fix:
             print("{} -- Fix Quality: {}".format(gps_state.current_log_line, gps_state.fix_quality))
@@ -540,8 +436,15 @@ def main_ui():
             fix_quality_str = ""
             if gps_state.fix_quality == 2:
                 fix_quality_str = "SBAS"
-            update_main_ui(gps_state.current_utc, gps_state.current_sat_count, gps_state.current_speed, stats_lines_written, fix_quality_str)
 
+            page_logger.show(
+                gps_state.current_utc,
+                "Sat Count: {}".format(gps_state.current_sat_count),
+                fix_quality_str,
+                "{:5.1f}".format(gps_state.current_speed),
+                "Points logged: {}".format(stats_lines_written),
+                #get_battery_str())
+                "{} bytes free".format(gc.mem_free()))
 
 # Here we go!
 startup_ui()

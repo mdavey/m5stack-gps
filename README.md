@@ -9,6 +9,16 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## Screenshots
 
+### From Device (with new font)
+
+| Startup/Logger                    | Transfer/Error                     |
+|-----------------------------------|------------------------------------|
+| ![](screenshots/page_startup.png) | ![](screenshots/page_transfer.png) |
+| ![](screenshots/page_logger.png)  | ![](screenshots/page_error.png)    |
+
+
+### Older IRL
+
 | Startup Screen                          | Main Logging Screen      |
 |-----------------------------------------|--------------------------|
 | ![](screenshots/screenshot_startup.jpg) | ![](screenshots/screenshot_main.jpg) |  
@@ -47,14 +57,17 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
       ├── config.py                      # Holds SSID/Password and other settings (gitignored, copy from config.py.sample)
       ├── config.py.sample               # Template for config.py
       ├── gps.py                         # Parses multiple messages and presents a "GPSState"
-      ├── nmea.py                        # Parses raw nmea messages into typed objects
+      ├── local_ui_test.py               # Uses `blinka-displayio-pygamedisplay` to show UI pages locally
       ├── nano_degrees.py                # Integer-math lat/long type (decimal degrees at nano-degree precision)
+      ├── nmea.py                        # Parses raw nmea messages into typed objects
+      ├── ui.py                          # UI Code split so it can be shared between device, and local testing
+      ├── fonts/                         # PCF fonts from PixelOperator 
       ├── lib/
       │   ├── axp2101.py                 # AXP2101 PMIC driver (Adafruit)
       │   ├── adafruit_focaltouch.mpy    # FT6336U touch driver (Adafruit)
       │   ├── adafruit_bitmap_font/      # Bitmap font loader (Adafruit)
-      │   ├── adafruit_httpserver/       # HTTP Webserver
-      │   └── font_free_sans_*/          # FreeSans PCF bitmap fonts
+      │   ├── adafruit_display_text/     # Text UI library (Adafruit)
+      │   └── adafruit_httpserver/       # HTTP Webserver (Adafruit)
       └── sd/
           └── placeholder.txt            # Make sure SD mount point is present
 ```
@@ -135,11 +148,13 @@ make sure to use firmware that includes PR11155.  e.g.
 - [NMEA-0183 GGA message](https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GGA.html)
 - Fonts from https://github.com/adafruit/circuitpython-fonts
 - PRN 122 or 139 are SouthPAN SBAS
+- Pixel Operator fonts by Jayvee Enaguas (HarvettFox96)
+
 
 ## AI Disclaimer
 
 * Circuit Python code (and bugs) created by a human.
-* `sync_data.py` created by GLM 5.2
+* `sync_data.py` created by GLM 5.2  (because I'm just too lazy)
 
 
 ## License
