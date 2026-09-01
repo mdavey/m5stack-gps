@@ -15,8 +15,10 @@ if [ "$METHOD" = "code" ]; then
 fi
 
 if [ "$METHOD" = "all" ]; then
-    rsync -av --delete ./src/ "$DEST"
+   # sync everything except `code.py`
+    rsync -rtv --delete --exclude='code.py' --modify-window=2 --inplace --size-only ./src/ "$DEST"
+    sync
 
-    # Copy this again to retrigger reload
-    cp ./src/*.py "$DEST"
+    # Now copy `code.py` to trigger reload
+    cp ./src/code.py "$DEST"
 fi
