@@ -20,7 +20,8 @@ import wifi
 import socketpool
 import gc
 
-from axp2101 import AXP2101  # battery chip
+from axp2101 import AXP2101, STANDBY as BATTERY_STATUS_STANDBY, DISCHARGING as BATTERY_STATUS_DISCHARGING, \
+    CHARGING as BATTERY_STATUS_CHARGING
 from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse, INTERNAL_SERVER_ERROR_500
 import adafruit_focaltouch
 
@@ -153,7 +154,15 @@ pmic = AXP2101(i2c)
 
 def get_battery_str():
     if pmic.is_battery_connected:
-        return "Battery voltage {:.2f}v".format(pmic.battery_voltage/1000)
+        state = 'Unknown'
+        if pmic.battery_status is BATTERY_STATUS_STANDBY:
+            state = 'Standby'
+        elif pmic.battery_status is BATTERY_STATUS_CHARGING:
+            state = 'Charging'
+        elif pmic.battery_status is BATTERY_STATUS_DISCHARGING:
+            state = 'Discharging'
+
+        return "Battery {}: {:.2f}v".format(state, pmic.battery_voltage/1000)
     else:
         return "No battery connected"
 
@@ -443,8 +452,8 @@ def main_ui():
                 fix_quality_str,
                 "{:5.1f}".format(gps_state.current_speed),
                 "Points logged: {}".format(stats_lines_written),
-                #get_battery_str())
-                "{} bytes free".format(gc.mem_free()))
+                get_battery_str())
+                # "{} bytes free".format(gc.mem_free()))
 
 # Here we go!
 startup_ui()
