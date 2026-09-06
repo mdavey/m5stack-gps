@@ -210,10 +210,16 @@ def wait_for_gps_present(uart: busio.UART):
 ################################################################
 
 def startup_ui():
-
+    start_time = time.monotonic()
     page_startup.show()
 
     while True:
+
+        # If we've been on this screen for a while, just to the main_ui()
+        if (config.AUTO_LOG_TIMEOUT  > 0) and (time.monotonic() - start_time > config.AUTO_LOG_TIMEOUT):
+            main_ui()
+
+        # Check if a button has been pressed
         try:
             if touch.touched:
                 if len(touch.touches) != 1:  # No Multitouch

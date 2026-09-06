@@ -2,6 +2,10 @@
 WIFI_SSID = "ssid"
 WIFI_PASSWORD = "password"
 
+# Number of seconds to automatically enter logger mode after power on
+# set to number less than 1 to disable
+AUTO_LOG_TIMEOUT = 8
+
 # Unicore Reference Commands Manual For N4 High Precision Products_V2_EN_R1.6.pdf
 # "When requesting NMEA messages, users should add GP before each command name" Page 61
 GPS_INIT_COMMANDS = [
