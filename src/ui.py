@@ -120,10 +120,6 @@ class PageTransfer(PageBase):
 
 class PageLogger(PageBase):
     def _create(self):
-        palette = displayio.Palette(1)
-        palette[0] = 0x111133
-        background = vectorio.Rectangle(pixel_shader=palette, width=320, height=240, x=0, y=0)
-
         self.label_date_time         = Label(self.fonts.get("16px"), text="", color=0xFFFFFF, x=26, y=20)
         self.label_satellite_details = Label(self.fonts.get("16px"), text="", color=0xFFFFFF, x=26, y=50)
         self.label_fix_quality       = Label(self.fonts.get("16px_bold"), text="", color=0xFFFFFF, x=226, y=50)
@@ -132,7 +128,6 @@ class PageLogger(PageBase):
         self.label_stats             = Label(self.fonts.get("16px"), text="", color=0xFFFFFF, x=26, y=180)
         self.label_battery_status    = Label(self.fonts.get("16px"), text="", color=0xFFFFFF, x=26, y=210)
 
-        self.group.append(background)
         self.group.append(self.label_date_time)
         self.group.append(self.label_satellite_details)
         self.group.append(self.label_fix_quality)
@@ -150,4 +145,3 @@ class PageLogger(PageBase):
         self.label_battery_status.text    = battery_status
 
         self._refresh()
-

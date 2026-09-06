@@ -34,7 +34,7 @@ screenshot(display, "../screenshots/page_startup.png")
 time.sleep(1)
 
 page_error = PageError(device, fonts)
-page_error.show("Error", "No GPS data: 12345")
+page_error.show("No GPS data", "For {}s".format(4))
 screenshot(display, "../screenshots/page_error.png")
 
 time.sleep(1)
