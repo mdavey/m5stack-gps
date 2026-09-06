@@ -7,7 +7,15 @@ WIFI_PASSWORD = "password"
 AUTO_LOG_TIMEOUT = 8
 
 # Unicore Reference Commands Manual For N4 High Precision Products_V2_EN_R1.6.pdf
-# "When requesting NMEA messages, users should add GP before each command name" Page 61
+#
+# "When requesting NMEA messages, users should add GP before each command name"
+# - Page 61
+#
+# "The currently supported output rates include 1 Hz, 2 Hz, 5 Hz, 10 Hz, 20 Hz and 50 Hz*,
+# corresponding to the parameters 1, 0.5, 0.2, 0.1, 0.05, 0.02* respectively."
+# - Page 63
+#
+# Order of logging is important, code wants a gga message before a rmc.  Make sure gpgga and gprmc are ordered too.
 GPS_INIT_COMMANDS = [
     "unlogall",
     "config signalgroup 2",
