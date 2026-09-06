@@ -209,6 +209,7 @@ def wait_for_gps_present(uart: busio.UART):
 
 ################################################################
 
+
 def startup_ui():
     start_time = time.monotonic()
     page_startup.show()
@@ -237,6 +238,9 @@ def startup_ui():
         except RuntimeError as e:
             traceback.print_exception(e)
             continue
+
+
+################################################################
 
 
 def transfer_default_route(request: Request):
@@ -290,7 +294,6 @@ def transfer_api_get_file_list(request: Request):
         return Response(request, body=body, content_type="application/json")
     except Exception as e:
         traceback.print_exception(e)
-        print(repr(request))
         return Response(request, status=INTERNAL_SERVER_ERROR_500, body=str(e), content_type="text/plain")
 
 
@@ -357,6 +360,9 @@ def transfer_ui():
     ])
 
     server.serve_forever(str(wifi.radio.ipv4_address))
+
+
+################################################################
 
 
 def main_ui():
@@ -434,7 +440,7 @@ def main_ui():
             page_error.show("No GPS Lock", "(UART Data: {})".format(stats_uart_lines_recv))
 
         if should_update_ui and gps_state.has_fix:
-            print("{} -- Fix Quality: {}".format(gps_state.current_log_line, gps_state.fix_quality))
+            # print("{} -- Fix Quality: {}".format(gps_state.current_log_line, gps_state.fix_quality))
             lines_waiting_to_write.append(gps_state.current_log_line)
 
             if len(lines_waiting_to_write) >= config.LINES_TO_BUFFER:
@@ -461,5 +467,8 @@ def main_ui():
                 get_battery_str())
                 # "{} bytes free".format(gc.mem_free()))
 
-# Here we go!
+
+################################################################
+
+
 startup_ui()
