@@ -1,3 +1,5 @@
+import traceback
+
 from nano_degrees import NanoDegrees
 
 
@@ -69,6 +71,11 @@ class RMC(NMEAMessage):
         self.track = track
 
 
+class SATSINFOA(NMEAMessage): # I know it's not NMEA...
+    def __init__(self, number_satellites: int):
+        self.number_satellites = number_satellites
+
+
 def safe_float(val: str):
     """Safely convert empty or invalid strings to floats without throwing errors."""
     try: return float(val) if val else 0.0
@@ -125,21 +132,58 @@ def parse_rmc(parts: list):
     )
 
 
+def parse_satsinfoa(complete_string: str):
+    def stream_data(text: str):
+        start = 0
+        while True:
+            end = text.find(",", start)
+            if end == -1:
+                yield text[start:]
+                break
+            yield text[start:end]
+            start = end + 1
+
+    (header, details) = complete_string.split(';')
+
+    try:
+        items = stream_data(details)
+        number_satellites = safe_int(next(items))     # Number of tracked satellites
+        version_number = safe_int(next(items)) # Version number, default = 2
+
+        next(items) # Reserved
+        next(items) # Reserved
+        next(items) # Reserved
+
+        frequency_flag = safe_int(next(items))  # Frequency flag
+
+        # I really don't care about frequencies and prns right now
+        return SATSINFOA(
+            number_satellites = number_satellites,
+        )
+
+    except StopIteration as e:
+        traceback.print_exception(e)
+
+    return None
+
+
 def parse_nmea(raw_sentence: str):
     """Clean the raw string, identify its type, and route to the correct parser."""
-    if not raw_sentence.startswith('$'): return None
+    if not raw_sentence.startswith('$') and not raw_sentence.startswith('#'): return None
 
     # Strip any trailing carriage returns, newlines, and the checksum split
     clean_line = raw_sentence.strip().split('*')[0]
-    parts = clean_line.split(',')
 
-    # Extract sentence identifier (e.g., GPGGA, GNRMC -> GGA, RMC)
-    msg_type = parts[0][3:] if len(parts[0]) > 3 else ""
+    if clean_line.startswith("$GNGGA"):       return parse_gga(clean_line.split(','))
+    elif clean_line.startswith("$GNRMC"):     return parse_rmc(clean_line.split(','))
+    elif clean_line.startswith("#SATSINFOA"): return parse_satsinfoa(clean_line)
 
-    if msg_type == "GGA":   return parse_gga(parts)
-    elif msg_type == "RMC": return parse_rmc(parts)
     return None
 
 
 if __name__ == "__main__":
     print(parse_nmea("$GNGGA,082228.00,3758.50556800,S,14511.93875408,E,2,28,0.5,49.1963,M,4.6768,M,2.0,0122"))
+
+
+    SATS_INFO = """#SATSINFOA,96,GPS,FINE,2215,367199000,0,0,18,16;50,2,0,0,0,63,2,302,51,0,45,0,2,0,42,9,2,4,48,17,0,37,0,3,0,43,14,3,0,39,9,3,5,225,14,0,42,0,2,0,37,9,2,6,35,64,0,47,0,3,0,52,14,3,0,48,9,3,9,80,33,0,42,0,3,0,44,14,3,0,40,9,3,11,300,56,0,46,0,3,0,50,14,3,0,46,9,3,12,277,37,0,42,0,2,0,41,9,2,17,134,31,0,44,0,2,0,41,9,2,19,130,53,0,46,0,2,0,43,9,2,20,232,47,0,46,0,2,0,42,9,2,25,316,15,0,38,0,3,0,45,14,3,0,40,9,3,28,0,0,0,37,0,2,0,31,9,2,194,170,8,5,38,0,3,5,41,14,3,5,37,9,3,195,112,67,5,45,0,3,5,49,14,3,5,47,9,3,196,132,61,5,42,0,3,5,48,14,3,5,46,9,3,199,163,43,5,36,0,3,5,46,14,3,5,44,9,3,39,116,64,1,43,0,2,1,49,5,2,55,316,30,1,43,0,2,1,46,5,2,52,242,10,1,39,0,2,1,39,5,2,38,35,28,1,40,0,2,1,41,5,2,61,93,29,1,42,0,2,1,45,5,2,54,22,62,1,47,0,2,1,50,5,2,40,180,27,1,42,0,2,1,45,5,2,46,342,4,1,34,0,2,1,39,5,2,11,93,61,4,33,0,3,4,52,17,3,4,50,21,3,42,114,67,4,34,0,4,4,51,21,4,4,48,8,4,4,49,12,4,2,224,33,4,45,17,2,4,41,21,2,10,214,52,4,29,0,3,4,46,17,3,4,45,21,3,28,306,28,4,29,0,4,4,44,21,4,4,41,8,4,4,42,12,4,40,180,42,4,31,0,4,4,44,21,4,4,43,8,4,4,43,12,4,8,289,63,4,31,0,3,4,48,17,3,4,46,21,3,43,8,79,4,36,0,4,4,51,21,4,4,47,8,4,4,50,12,4,7,197,46,4,28,0,3,4,47,17,3,4,45,21,3,21,47,30,4,31,0,4,4,43,21,4,4,43,8,4,4,43,12,4,23,243,4,4,24,8,2,4,30,12,2,4,123,26,4,43,17,2,4,41,21,2,5,248,16,4,38,17,2,4,35,21,2,1,139,36,4,28,0,3,4,46,17,3,4,43,21,3,34,111,40,4,32,0,4,4,48,21,4,4,44,8,4,4,41,12,4,38,317,74,4,35,0,4,4,49,21,4,4,47,8,4,4,49,12,4,2,311,18,3,39,2,3,3,45,17,3,3,43,12,3,4,136,38,3,43,2,3,3,48,17,3,3,46,12,3,10,0,0,3,47,2,3,3,53,17,3,3,50,12,3,11,325,63,3,43,2,3,3,47,17,3,3,45,12,3,12,71,45,3,42,2,3,3,45,17,3,3,42,12,3,19,63,32,3,40,2,3,3,40,17,3,3,38,12,3,24,203,15,3,37,2,3,3,43,17,3,3,40,12,3,25,260,32,3,42,2,3,3,46,17,3,3,44,12,3,9,181,7,3,37,2,3,3,41,17,3,3,39,12,3,36,286,19,3,34,2,3,3,42,17,3,3,38,12,3*a79d3813"""
+    print(parse_nmea(SATS_INFO))
