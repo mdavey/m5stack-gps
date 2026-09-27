@@ -20,8 +20,7 @@ import wifi
 import socketpool
 import gc
 
-from axp2101 import AXP2101, STANDBY as BATTERY_STATUS_STANDBY, DISCHARGING as BATTERY_STATUS_DISCHARGING, \
-    CHARGING as BATTERY_STATUS_CHARGING
+from axp2101 import AXP2101, BatteryStatus
 from adafruit_httpserver import Request, Response, Server, Route, ChunkedResponse, INTERNAL_SERVER_ERROR_500
 import adafruit_focaltouch
 
@@ -155,14 +154,14 @@ pmic = AXP2101(i2c)
 def get_battery_str():
     if pmic.is_battery_connected:
         state = 'Unknown'
-        if pmic.battery_status is BATTERY_STATUS_STANDBY:
-            state = 'Standby'
-        elif pmic.battery_status is BATTERY_STATUS_CHARGING:
+        if pmic.battery_status is BatteryStatus.STANDBY:
+            state = 'Battery'
+        elif pmic.battery_status is BatteryStatus.CHARGING:
             state = 'Charging'
-        elif pmic.battery_status is BATTERY_STATUS_DISCHARGING:
+        elif pmic.battery_status is BatteryStatus.DISCHARGING:
             state = 'Discharging'
 
-        return "Battery {}: {:.2f}v".format(state, pmic.battery_voltage/1000)
+        return "{}: {:.2f}v".format(state, pmic.battery_voltage/1000)
     else:
         return "No battery connected"
 
