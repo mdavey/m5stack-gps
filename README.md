@@ -141,6 +141,14 @@ Related to this issue, if you are having trouble running CircuitPython 10.x,
 make sure to use firmware that includes PR11155.  e.g. 
 `adafruit-circuitpython-m5stack_cores3-en_US-20260731-main-PR11155-719f88d.bin`   
 
+## Accuracy Testing
+
+```
+If coordinates are within ~0.4 to 0.5 metres: Receiver is using GDA2020
+If coordinates are systematically shifted by ~1.5 to 1.8 metres to the Northeast: Receiver is using WGS84
+If coordinates are systematically shifted ~1.5 to 1.8 metres to the Southwest: Receiver is using GDA94 (legacy)
+```
+
 
 ## References
 
