@@ -465,7 +465,7 @@ def main_ui():
 
                 fix_quality_str,
                 "{:5.1f}".format(gps_state.current_speed),
-                "Points logged: {}".format(stats_lines_written),
+                "Points saved: {}".format(stats_lines_written),
                 get_battery_str())
                 # "{} bytes free".format(gc.mem_free()))
 
