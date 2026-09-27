@@ -1,5 +1,5 @@
 import traceback
-from nmea import GGA, RMC, parse_nmea
+from nmea import GGA, RMC, DTM, parse_nmea
 
 
 try:
@@ -27,6 +27,8 @@ class GPSState:
         self.current_sat_count = None
         self.current_speed = None
         self.fix_quality = None
+        self.local_datum = None
+        self.reference_datum = None
 
 
     def update(self, nmea_raw_data):
@@ -58,6 +60,10 @@ class GPSState:
                 raise GPSStateException("Two RMC without a GGA")
             else:
                 self._last_rmc = msg
+
+        if type(msg) is DTM:
+            self.local_datum = msg.local_datum
+            self.reference_datum = msg.reference_datum
 
         if self._last_gga and self._last_rmc:
             if self._last_gga.utc_time != self._last_rmc.utc_time:  # these are comparable
