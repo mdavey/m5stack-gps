@@ -183,8 +183,6 @@ def wait_for_gps_present(uart: busio.UART):
     # Send initial commands, and check that data comes back
     start_time = time.monotonic()
 
-    print("Checking for GPS")
-
     while True:
 
         # noinspection PyTypeChecker
