@@ -48,10 +48,10 @@ time.sleep(1)
 page_logger = PageLogger(device, fonts)
 page_logger.show(
     "2024-09-01T12:22:34Z",
-    "Sat Count: 21",
+    "Satellites: 21",
     "CBAS",
     "{:5.1f}".format(41.1238),
-    "Points logged: {}".format(631),
+    "Points saved: {}".format(631),
     "No battery connected")
 screenshot(display, "../screenshots/page_logger.png")
 
