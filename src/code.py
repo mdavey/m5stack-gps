@@ -258,6 +258,14 @@ def transfer_default_route(request: Request):
     return Response(request, body=html, content_type="text/html")
 
 
+def transfer_api_file_exists(filename: str) -> bool:
+    try:
+        os.stat(filename)
+        return True
+    except OSError:
+        return False
+
+
 def transfer_api_get_file_content(request: Request, filename):
     def chunked_data():
         with device.sd_card():
