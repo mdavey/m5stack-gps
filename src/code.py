@@ -136,7 +136,7 @@ class SDCardContext:
 
 def write_buffered_lines_to_file(filename, lines):
     with device.sd_card():
-        with open(filename, "a+") as f:
+        with open(filename, "a") as f:
             for line in lines:
                 f.write(line + "\n")
             f.flush()
