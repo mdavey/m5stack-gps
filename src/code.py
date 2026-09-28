@@ -455,7 +455,15 @@ def main_ui():
                     current_filename = "/sd/{}.csv".format(gps_state.current_utc.replace("-", "").replace(":", "").replace("T", "_"))
                     lines_waiting_to_write.insert(0, "timestamp,latitude,longitude,altitude,speed,num_satellites,hdop")
 
-                write_buffered_lines_to_file(current_filename, lines_waiting_to_write)
+                # Write the buffered lines, if there is any error, halt and display an error message
+                # The error is probably critical (failed sd card, full, etc.)
+                try:
+                    write_buffered_lines_to_file(current_filename, lines_waiting_to_write)
+                except Exception as e:
+                    while True:
+                        page_error.show("Error writting data to file", str(e))
+                        time.sleep(1)
+
                 stats_lines_written += len(lines_waiting_to_write)
                 lines_waiting_to_write = []
 
