@@ -1,3 +1,6 @@
+# Run this script from inside src directory with `uv run local_ui_test.py`
+
+
 import sys
 sys.path.append('lib')
 
