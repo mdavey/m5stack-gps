@@ -5,9 +5,6 @@ from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 
 
-# FIXME:  Don't load fonts we don't use
-
-
 class Fonts:
     def __init__(self):
         self._fonts = {}
@@ -19,12 +16,12 @@ class Fonts:
         #
         # (Converted to BDF and then PCF by me)
         self._fonts["16px"] = bitmap_font.load_font("fonts/PixelOperator8-16.pcf")
-        self._fonts["24px"] = bitmap_font.load_font("fonts/PixelOperator8-24.pcf")
-        self._fonts["32px"] = bitmap_font.load_font("fonts/PixelOperator8-32.pcf")
-        self._fonts["40px"] = bitmap_font.load_font("fonts/PixelOperator8-40.pcf")
+        # self._fonts["24px"] = bitmap_font.load_font("fonts/PixelOperator8-24.pcf")
+        # self._fonts["32px"] = bitmap_font.load_font("fonts/PixelOperator8-32.pcf")
+        # self._fonts["40px"] = bitmap_font.load_font("fonts/PixelOperator8-40.pcf")
 
         self._fonts["16px_bold"] = bitmap_font.load_font("fonts/PixelOperator8-Bold-16.pcf")
-        self._fonts["24px_bold"] = bitmap_font.load_font("fonts/PixelOperator8-Bold-24.pcf")
+        # self._fonts["24px_bold"] = bitmap_font.load_font("fonts/PixelOperator8-Bold-24.pcf")
         self._fonts["32px_bold"] = bitmap_font.load_font("fonts/PixelOperator8-Bold-32.pcf")
         self._fonts["40px_bold"] = bitmap_font.load_font("fonts/PixelOperator8-Bold-40.pcf")
 
