@@ -49,19 +49,19 @@ class GPSState:
             return False
 
 
-        if type(msg) is GGA:
+        if isinstance(msg, GGA):
             if self._last_gga is not None:
                 raise GPSStateException("Two GGA without a RMC")
             else:
                 self._last_gga = msg
 
-        if type(msg) is RMC:
+        if isinstance(msg, RMC):
             if self._last_rmc is not None:
                 raise GPSStateException("Two RMC without a GGA")
             else:
                 self._last_rmc = msg
 
-        if type(msg) is DTM:
+        if isinstance(msg, DTM):
             self.local_datum = msg.local_datum
             self.reference_datum = msg.reference_datum
 
