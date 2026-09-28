@@ -356,7 +356,7 @@ def transfer_ui():
         Route("/reset", "GET", transfer_api_soft_reset),
     ])
 
-    server.serve_forever(str(wifi.radio.ipv4_address))
+    server.serve_forever(host=str(wifi.radio.ipv4_address), port=5000)
 
 
 ################################################################
