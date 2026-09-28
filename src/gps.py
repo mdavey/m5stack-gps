@@ -32,7 +32,8 @@ class GPSState:
 
 
     def update(self, nmea_raw_data):
-        """Pass a raw nmea data.  Returns True once each second (a GGA and RMC message)"""
+        """Takes raw nmea data.  Returns True when both a GGA and RMC message pair have been received and the class
+        variables have been updated and the UI should update"""
 
         # Try to parse it
         try:
@@ -45,7 +46,7 @@ class GPSState:
 
         # Couldn't?
         if msg is None:
-            print("Raw: ", text)
+            print("Unknown message: ", text)
             return False
 
 
@@ -66,6 +67,8 @@ class GPSState:
             self.reference_datum = msg.reference_datum
 
         if self._last_gga and self._last_rmc:
+
+            # FIXME: This fails at > 1hz!   Though, any missed GGA/RMC should be caught above and cause a reset
             if self._last_gga.utc_time != self._last_rmc.utc_time:  # these are comparable
                 raise GPSStateException("GGA and RMC out of sync!?")
 
@@ -85,6 +88,7 @@ class GPSState:
 
             self.fix_quality = self._last_gga.fix_quality
 
+            # um980 emits hdop of 999 when it had a lock, but loses it, and continues to give the last lat/lon
             if self._last_gga.hdop < 100 and self._last_gga.satellites > 3:
                 self.has_fix = True
                 self.current_utc = line_utc
