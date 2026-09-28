@@ -384,7 +384,7 @@ def main_ui():
     #     timeout=0.01, # 10ms wait for a character
     # )
 
-    # Spin for a while waiting for a message to come back from the GPS before continuing
+    # Spin for a while waiting for any data to come back from the UART before continuing
     wait_for_gps_present(uart)
 
 
