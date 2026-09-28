@@ -373,7 +373,7 @@ def main_ui():
         rx=board.PORTA_SDA,
         baudrate=115200,
         timeout=0.01, # 10ms wait for a character
-        receiver_buffer_size=1024,  # I **think** when switching to 5Hz, when we re-init the display we overflow
+        receiver_buffer_size=16384,  # I **think** when switching to 5Hz, when we re-init the display we overflow
     )
 
     # PortB
