@@ -196,15 +196,17 @@ def parse_nmea(raw_sentence: str):
     """Clean the raw string, identify its type, and route to the correct parser."""
     if not raw_sentence.startswith('$') and not raw_sentence.startswith('#'): return None
 
-    # Strip any trailing carriage returns, newlines, and the checksum split
-    clean_line = raw_sentence.strip().split('*')[0]
+    try:
+        # Strip any trailing carriage returns, newlines, and the checksum split
+        clean_line = raw_sentence.strip().split('*')[0]
 
-    if clean_line.startswith("$GNGGA"):       return parse_gga(clean_line.split(','))
-    elif clean_line.startswith("$GNRMC"):     return parse_rmc(clean_line.split(','))
-    elif clean_line.startswith("$GNDTM"):     return parse_dtm(clean_line.split(','))
-    elif clean_line.startswith("#SATSINFOA"): return parse_satsinfoa(clean_line)
-
-    return None
+        # UM980 always emits $GNxxx  (even though you must send $GPxxx commands)
+        if clean_line.startswith("$GNGGA"):       return parse_gga(clean_line.split(','))
+        elif clean_line.startswith("$GNRMC"):     return parse_rmc(clean_line.split(','))
+        elif clean_line.startswith("$GNDTM"):     return parse_dtm(clean_line.split(','))
+        elif clean_line.startswith("#SATSINFOA"): return parse_satsinfoa(clean_line)
+    except IndexError as e:
+        traceback.print_exception(e)
 
 
 if __name__ == "__main__":
