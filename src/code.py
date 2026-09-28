@@ -458,11 +458,7 @@ def main_ui():
 
             page_logger.show(
                 gps_state.current_utc,
-
-                # Testing DATUMs
-                # "Satellites: {}".format(gps_state.current_sat_count),
-                "{} {} {}".format(gps_state.current_sat_count, gps_state.local_datum or "?", gps_state.reference_datum or "?"),
-
+                "Satellites: {}".format(gps_state.current_sat_count),
                 fix_quality_str,
                 "{:5.1f}".format(gps_state.current_speed),
                 "Points saved: {}".format(stats_lines_written),
