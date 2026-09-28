@@ -29,7 +29,7 @@ class UtcDate:
         return str(self) == str(other)
 
     def __str__(self):
-        return "{:04}:{:02}:{:02}".format(self.year, self.month, self.day)
+        return "{:04}-{:02}-{:02}".format(self.year, self.month, self.day)
 
     def __repr__(self):
         return "UtcDate(year={}, month={}, day={})".format(self.year, self.month, self.day)
