@@ -11,6 +11,8 @@ AUTO_LOG_TIMEOUT = 8
 # "When requesting NMEA messages, users should add GP before each command name"
 # - Page 61
 #
+# ^ But, the UM980 will return #GNxxx messages
+#
 # "The currently supported output rates include 1 Hz, 2 Hz, 5 Hz, 10 Hz, 20 Hz and 50 Hz*,
 # corresponding to the parameters 1, 0.5, 0.2, 0.1, 0.05, 0.02* respectively."
 # - Page 63

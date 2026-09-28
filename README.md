@@ -82,8 +82,8 @@ unlogall                     # disable all nmea messages
 config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
 mode rover                   # rover  (not a base station)
 config sbas enable span      # enable SBAS for SouthPAN  (Australia)
-gngga 1                      # log GGA messages  (fix details)
-gnrmc 1                      # log RMC message   (speed time & date)
+gpgga 1                      # log GGA messages  (fix details)
+gprmc 1                      # log RMC message   (speed time & date)
 version
 ```
 
