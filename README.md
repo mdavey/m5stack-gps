@@ -126,6 +126,13 @@ mode and then use `sync_data.py` to download any logs to `./data/` and convert
 them to GPX.
 
 
+## TODO
+
+* Check if I can just use `BESTNAV` rather than combining `GGA` + `RMC`.
+* Test what happens if the AP isn't found, or there is an incorrect password
+* Update PageBase to keep track of the last root_group assignment and to skip redundant assignments 
+* I don't have msec for > 1hz  (and even 1hz could be 0.999 msec out)
+
 ## Issues
 
 Accessing the SD Card *and* the Display at the same time doesn't seem to be
@@ -140,14 +147,6 @@ For a logger, I'm prepared to live with this.
 Related to this issue, if you are having trouble running CircuitPython 10.x, 
 make sure to use firmware that includes PR11155.  e.g. 
 `adafruit-circuitpython-m5stack_cores3-en_US-20260731-main-PR11155-719f88d.bin`   
-
-## Accuracy Testing
-
-```
-If coordinates are within ~0.4 to 0.5 metres: Receiver is using GDA2020
-If coordinates are systematically shifted by ~1.5 to 1.8 metres to the Northeast: Receiver is using WGS84
-If coordinates are systematically shifted ~1.5 to 1.8 metres to the Southwest: Receiver is using GDA94 (legacy)
-```
 
 
 ## References
