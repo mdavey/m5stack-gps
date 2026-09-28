@@ -28,5 +28,5 @@ GPS_INIT_COMMANDS = [
     "version"
 ]
 
-# How many GPS coords to buffer before writing to the SD Card  (at default logger output of 1hz)
+# How many points to buffer before writing to the SD Card  (time between updates in is: LINES_TO_BUFFER / UPDATE_SPEED_IN_HZ)
 LINES_TO_BUFFER = 30
