@@ -9,15 +9,13 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## Screenshots
 
-### From Device (with new font)
-
 | Startup/Logger                    | Transfer/Error                     |
 |-----------------------------------|------------------------------------|
 | ![](screenshots/page_startup.png) | ![](screenshots/page_transfer.png) |
 | ![](screenshots/page_logger.png)  | ![](screenshots/page_error.png)    |
 
 
-### Older IRL
+### Older UI shown on hardware
 
 | Startup Screen                          | Main Logging Screen      |
 |-----------------------------------------|--------------------------|
@@ -34,7 +32,9 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 - CLI script to download all the files locally and convert to GPX
 
 
-## Hardware
+## Getting started
+
+### Required Hardware
 
 | Component     | Details                                                                    |
 |---------------|----------------------------------------------------------------------------|
@@ -42,6 +42,27 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 | GNSS receiver | Unicore UM980. Port A/B Grove (TX/RX wiring may be swapped!) @ 115200 baud |
 | Storage       | MicroSD card                                                               |
 | Firmware      | Adafruit CircuitPython 10.x  (Nightly with SPI fix)                        |
+
+
+### Software
+
+* Copy `src/config.py.sample` to `src/config.py` and make any required changes
+* Copy **all** files in `src/` to MCU.
+* Run, and look for errors on the screen, or terminal
+
+
+### How to access the GNSS points
+
+There are three options:
+
+1. Remove the SD Card from the M5Stack and copy the CSV files manually.
+
+2. Enter file transfer mode, and use a browser to download the CSV files
+   from `http://ip:5000/`.  (This requires the device to be connected to an AP)
+
+3. Enter file transr mode, and use `sync_data.py` script to download all logs 
+   to `./data/` directory, convert them to GPX, and optionally delete them from 
+   the SD card. **Recommended**
 
 
 ## Project layout
@@ -75,7 +96,7 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 
 ## GPS configuration
 
-The receiver is configured at every boot via UART commands:
+The receiver is configured at every boot using the commands in `src/config.py`:
 
 ```
 unlogall                     # disable all nmea messages
@@ -87,8 +108,7 @@ gprmc 1                      # log RMC message   (speed time & date)
 version
 ```
 
-**Note:** If all messages are enabled, there seems to be an issue with the 
-UART keeping up.
+Note: The signal group and SBAS options are specific to my location (Australia).
 
 
 ## Log format
@@ -113,25 +133,16 @@ A fix is accepted when `hdop < 100` and `sats > 3`.
 and not easy to append too.
 
 
-## Getting Data Off
-
-1. Remove the SD Card and copy the CSV files.
-
-2. On startup, enter file transfer mode.  Device will connect to the Wifi AP 
-defined in `src/config.py`.  You can browse and download files via a web
-browser: `http://ip:5000/`
-
-3. Rather than using a web browser to manually download the files, enter 
-mode and then use `sync_data.py` to download any logs to `./data/` and convert
-them to GPX.
-
-
 ## TODO
 
 * Check if I can just use `BESTNAV` rather than combining `GGA` + `RMC`.
 * Test what happens if the AP isn't found, or there is an incorrect password
 * Update PageBase to keep track of the last root_group assignment and to skip redundant assignments 
-* I don't have msec for > 1hz  (and even 1hz could be 0.999 msec out)
+* I don't have UTC msec for > 1hz  (and even 1hz could be 0.999 msec out)
+* Breakout CSV → GPX tool
+* Allow transfer mode to create its own Wifi AP
+* Add a "safe shutdown" function  (flush buffer to SD card, and stop).
+
 
 ## Issues
 
