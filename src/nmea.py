@@ -46,7 +46,7 @@ class NMEAMessage:
         vals = []
         for key, value in vars(self).items():
             vals.append("{}={}".format(key, repr(value)))
-        return ", ".join(vals)
+        return "{}({})".format(self.__class__.__name__, ", ".join(vals))
 
 
 class GGA(NMEAMessage):
