@@ -1,11 +1,21 @@
 # GPS Logger (M5Stack CoreS3)
 
-A GPS data logger built on the **M5Stack CoreS3** (ESP32-S3) running **CircuitPython**.
-It reads NMEA sentences from a **Unicore UM980** GNSS receiver over UART, renders a
-live dashboard on the built-in 3.2" TFT display, monitors the battery via the
-AXP2101 PMIC, and logs every fix to an SD card as CSV.
+A GPS data logger built using CircuitPython and tested on the
+**M5Stack CoreS3**.
 
-**Not yet ready for use**
+It reads NMEA sentences from a **Unicore UM980** GNSS receiver over UART,
+displays a basic dashboard including speed and battery status (via an AXP2101 
+PMIC), and logs positions to an SD card as custom CSV files.
+
+Additionally, it can connect to a (pre-defined) 2.4GHz Wi-Fi AP and expose
+a web server with a REST API, allowing the CSV files to be automatically downloaded.
+
+
+## Status
+
+ * Still just a proof of concept
+ * Ran successfully at 1 Hz for over 2 hours
+
 
 ## Screenshots
 
@@ -15,21 +25,13 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 | ![](screenshots/page_logger.png)  | ![](screenshots/page_error.png)    |
 
 
-### Older UI shown on hardware
+### Older UI (on hardware)"
 
 | Startup Screen                          | Main Logging Screen      |
 |-----------------------------------------|--------------------------|
 | ![](screenshots/screenshot_startup.jpg) | ![](screenshots/screenshot_main.jpg) |  
 
 *(Yes it's upside down, I drilled holes before checking where the cable had to reach)*
-
-
-## Features
-
-- Basic Display with time and speed and battery life (if battery turned on)
-- Works around M5Stack CoreS3 using the same pin for LCD D/C **and** MISO for SD Card.
-- Exposes an HTTP server for getting CSV files off SD Card
-- CLI script to download all the files locally and convert to GPX
 
 
 ## Getting started
@@ -47,25 +49,68 @@ AXP2101 PMIC, and logs every fix to an SD card as CSV.
 ### Software
 
 * Copy `src/config.py.sample` to `src/config.py` and make any required changes
-* Copy **all** files in `src/` to MCU.
-* Run, and look for errors on the screen, or terminal
+* Copy **all** files in `src/` to the MCU.
+* Start the MCU and watch for errors on the screen or in the serial console.
 
 
-### How to access the GNSS points
+### Log files
 
-There are three options:
+Log files are saved onto the SD card periodically.  The time between writes 
+can be set via the config file (20-40s is good range).
+
+Position data is saved as a CSV files rather than GPX due to the reduced size 
+and ease of access.
+
+To get the logs off the device there are three options:
 
 1. Remove the SD Card from the M5Stack and copy the CSV files manually.
 
 2. Enter file transfer mode, and use a browser to download the CSV files
    from `http://ip:5000/`.  (This requires the device to be connected to an AP)
 
-3. Enter file transr mode, and use `sync_data.py` script to download all logs 
-   to `./data/` directory, convert them to GPX, and optionally delete them from 
-   the SD card. **Recommended**
+3. Enter file transfer mode, and use the `sync_data.py` script to download all logs 
+   to the `./data/` directory, automatically  convert them to GPX, and optionally 
+   delete them from the SD card. **Recommended**
 
 
-## Project layout
+### Log format
+
+Logs are named `[yyyymmdd]_[hhmmss]Z.csv`
+
+**Example:**
+```
+timestamp,latitude,longitude,altitude,speed,num_satellites,hdop
+2026-08-15T14:30:00Z,-47.276949070,142.138929220,12.34,42.65,12,0.9
+```
+
+- `timestamp` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
+- `latitude`/`longitude` — decimal degrees
+- `altitude` — metres (GGA)
+- `speed` — km/h (RMC overground speed, knots × 1.852)
+- `num_satellites` — satellite count (GGA)
+- `hdop` — horizontal dilution of precision (GGA)
+
+
+### GPS configuration
+
+The receiver is configured on every boot using the commands in `src/config.py`.
+
+The default commands are for a Unicore UM980 and enable SBAS for Australia.
+
+```
+unlogall                     # disable all nmea messages
+config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
+mode rover                   # rover  (not a base station)
+config sbas enable span      # enable SBAS for SouthPAN  (Australia)
+gpgga 1                      # log GGA messages  (fix details)
+gprmc 1                      # log RMC message   (speed time & date)
+version
+```
+
+
+## Development
+
+### Project layout
 
 ```
   .
@@ -94,73 +139,34 @@ There are three options:
 ```
 
 
-## GPS configuration
-
-The receiver is configured at every boot using the commands in `src/config.py`:
-
-```
-unlogall                     # disable all nmea messages
-config signalgroup 2         # switch to signal group 2  (GNSS frequency preset)
-mode rover                   # rover  (not a base station)
-config sbas enable span      # enable SBAS for SouthPAN  (Australia)
-gpgga 1                      # log GGA messages  (fix details)
-gprmc 1                      # log RMC message   (speed time & date)
-version
-```
-
-Note: The signal group and SBAS options are specific to my location (Australia).
-
-
-## Log format
-
-Logged to `/sd/[yyyymmdd]_[hhmmss]Z.csv`
-
-```
-timestamp,latitude,longitude,altitude,speed,num_satellites,hdop
-2026-08-15T14:30:00Z,-47.276949070,142.138929220,12.34,42.65,12,0.9
-```
-
-- `timestamp` — UTC, `YYYY-MM-DDTHH:MM:SSZ`
-- `latitude`/`longitude` — decimal degrees
-- `altitude` — metres (GGA)
-- `speed` — km/h (RMC overground speed, knots × 1.852)
-- `num_satellites` — satellite count (GGA)
-- `hdop` — horizontal dilution of precision (GGA)
-
-A fix is accepted when `hdop < 100` and `sats > 3`.
-
-**Note:** We're not natively using a GPX because it's pretty space inefficient 
-and not easy to append too.
-
-
-## TODO
+### TODO
 
 * Check if I can just use `BESTNAV` rather than combining `GGA` + `RMC`.
 * Test what happens if the AP isn't found, or there is an incorrect password
 * Update PageBase to keep track of the last root_group assignment and to skip redundant assignments 
-* I don't have UTC msec for > 1hz  (and even 1hz could be 0.999 msec out)
-* Breakout CSV → GPX tool
-* Allow transfer mode to create its own Wifi AP
-* Add a "safe shutdown" function  (flush buffer to SD card, and stop).
+* GGA and RMC don't have UTC milliseconds.   This is needed for rates above 1hz  (even 1hz could be 0.999 ms out).
+* Separate the CSV → GPX tool into a separate script
+* Allow transfer mode to create its own Wi-Fi AP
+* Add a "safe shutdown" function  (flush the buffer to the SD card, and stop).
 
 
-## Issues
+### Issues
 
 Accessing the SD Card *and* the Display at the same time doesn't seem to be
 possible as the CoreS3 re-used the SPI MISO pin for the DC pin of the LCD.
 
 This probably isn't a big deal if you were writing the code in C, but it
-required a workaround for CircuitPython.  The workaround seems okay, but it 
+requires a workaround for CircuitPython.  The workaround seems okay, but it 
 does make the screen redraw when switching between the two devices.
 
 For a logger, I'm prepared to live with this.
 
-Related to this issue, if you are having trouble running CircuitPython 10.x, 
-make sure to use firmware that includes PR11155.  e.g. 
-`adafruit-circuitpython-m5stack_cores3-en_US-20260731-main-PR11155-719f88d.bin`   
+On a related note, if you have trouble running CircuitPython 10.x, make sure 
+you're using firmware that includes PR11155, such as:
+`adafruit-circuitpython-m5stack_cores3-en_US-20260731-main-PR11155-719f88d.bin`
 
 
-## References
+### References
 
 - [UM980 configuration commands](https://www.ardusimple.com/how-to-configure-unicore-um980-um981-um982/#Frequently-used-commands)
 - [NMEA-0183 GGA message](https://receiverhelp.trimble.com/alloy-gnss/en-us/NMEA-0183messages_GGA.html)
@@ -169,12 +175,12 @@ make sure to use firmware that includes PR11155.  e.g.
 - Pixel Operator fonts by Jayvee Enaguas (HarvettFox96)
 
 
-## AI Disclaimer
+### AI Disclaimer
 
-* Circuit Python code (and bugs) created by a human.
-* `sync_data.py` created by GLM 5.2  (because I'm just too lazy)
+* All CircuitPython code (and bugs) written by a human.
+* `sync_data.py` created by GLM 5.2  (because I was too lazy)
 
 
-## License
+### License
 
 MIT
